@@ -1,0 +1,407 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum Role {
+  SUPERADMIN
+  DEPT_ADMIN
+  EMPLOYEE
+  VIEWER
+}
+
+enum Department {
+  MARKETING
+  LOGISTICA
+  IT
+  RRHH
+  CONTABILIDAD
+  PRODUCTO
+  DIRECCION
+}
+
+enum FeatureStatus {
+  PENDIENTE
+  EN_REVISION
+  EN_DESARROLLO
+  COMPLETADO
+  DESCARTADO
+}
+
+enum TicketStatus {
+  ABIERTO
+  EN_PROGRESO
+  RESUELTO
+  CERRADO
+}
+
+enum TicketPriority {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum ComplaintStatus {
+  RECIBIDA
+  EN_INVESTIGACION
+  RESUELTA
+  ARCHIVADA
+}
+
+enum ComplaintCategory {
+  ACOSO_LABORAL
+  FRAUDE
+  DISCRIMINACION
+  CONFLICTO_INTERESES
+  OTRO
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+// ─────────────────────────────────────────
+// USUARIOS
+// ─────────────────────────────────────────
+
+model User {
+  id                 String     @id @default(cuid())
+  name               String
+  email              String     @unique
+  passwordHash       String
+  role               Role       @default(EMPLOYEE)
+  department         Department
+  mustChangePassword Boolean    @default(true)
+  isActive           Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  featureRequests    FeatureRequest[]
+  votes              Vote[]
+  tickets            Ticket[]
+  comments           Comment[]
+  featureComments    FeatureComment[]
+  notifications      Notification[]
+  complaintAuditLogs ComplaintAuditLog[]
+  sessions           Session[]
+  accounts           Account[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────
+// ETIQUETAS
+// ─────────────────────────────────────────
+
+model Tag {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  color    String       @default("#6366f1")
+  tickets  TicketTag[]
+  features FeatureTag[]
+
+  @@map("tags")
+}
+
+model TicketTag {
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([ticketId, tagId])
+  @@map("ticket_tags")
+}
+
+model FeatureTag {
+  featureId String
+  feature   FeatureRequest @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([featureId, tagId])
+  @@map("feature_tags")
+}
+
+// ─────────────────────────────────────────
+// ADJUNTOS
+// ─────────────────────────────────────────
+
+model Attachment {
+  id               String         @id @default(cuid())
+  filename         String
+  storageKey       String         @unique
+  mimeType         String
+  size             Int
+  type             AttachmentType
+  uploadedAt       DateTime       @default(now())
+
+  ticketId         String?
+  ticket           Ticket?         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  commentId        String?
+  comment          Comment?        @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  featureId        String?
+  feature          FeatureRequest? @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  featureCommentId String?
+  featureComment   FeatureComment? @relation(fields: [featureCommentId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+// ─────────────────────────────────────────
+// MÓDULO 1 — PETICIONES DE FUNCIONALIDAD
+// ─────────────────────────────────────────
+
+model FeatureRequest {
+  id                    String         @id @default(cuid())
+  title                 String
+  description           String
+  status                FeatureStatus  @default(PENDIENTE)
+  originDept            Department
+  targetDept            Department
+  authorId              String
+  author                User           @relation(fields: [authorId], references: [id])
+  voteCount             Int            @default(0)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  votes                 Vote[]
+  comments              FeatureComment[]
+  tags                  FeatureTag[]
+  attachments           Attachment[]
+  statusHistory         FeatureStatusHistory[]
+  convertedFromTicketId String?        @unique
+  convertedFrom         Ticket?        @relation("TicketToFeature", fields: [convertedFromTicketId], references: [id])
+
+  @@map("feature_requests")
+}
+
+model Vote {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  featureId String
+  feature   FeatureRequest @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@unique([userId, featureId])
+  @@map("votes")
+}
+
+model FeatureComment {
+  id          String         @id @default(cuid())
+  content     String
+  isInternal  Boolean        @default(false)
+  authorId    String
+  author      User           @relation(fields: [authorId], references: [id])
+  featureId   String
+  feature     FeatureRequest @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("feature_comments")
+}
+
+model FeatureStatusHistory {
+  id         String         @id @default(cuid())
+  featureId  String
+  feature    FeatureRequest @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  fromStatus FeatureStatus?
+  toStatus   FeatureStatus
+  changedAt  DateTime       @default(now())
+
+  @@map("feature_status_history")
+}
+
+// ─────────────────────────────────────────
+// MÓDULO 2 — INCIDENCIAS / SOPORTE
+// ─────────────────────────────────────────
+
+model Ticket {
+  id            String          @id @default(cuid())
+  title         String
+  description   String
+  status        TicketStatus    @default(ABIERTO)
+  priority      TicketPriority  @default(MEDIA)
+  originDept    Department
+  targetDept    Department
+  authorId      String
+  author        User            @relation(fields: [authorId], references: [id])
+  assigneeId    String?
+  slaDeadline   DateTime?
+  slaBreached   Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  resolvedAt    DateTime?
+
+  comments      Comment[]
+  tags          TicketTag[]
+  attachments   Attachment[]
+  statusHistory TicketStatusHistory[]
+  convertedTo   FeatureRequest? @relation("TicketToFeature")
+
+  @@map("tickets")
+}
+
+model Comment {
+  id          String       @id @default(cuid())
+  content     String
+  isInternal  Boolean      @default(false)
+  authorId    String
+  author      User         @relation(fields: [authorId], references: [id])
+  ticketId    String
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("comments")
+}
+
+model TicketStatusHistory {
+  id         String        @id @default(cuid())
+  ticketId   String
+  ticket     Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fromStatus TicketStatus?
+  toStatus   TicketStatus
+  changedAt  DateTime      @default(now())
+
+  @@map("ticket_status_history")
+}
+
+// ─────────────────────────────────────────
+// SLA
+// ─────────────────────────────────────────
+
+model SlaPolicy {
+  id                String         @id @default(cuid())
+  priority          TicketPriority @unique
+  resolutionMinutes Int
+  escalateTo        Role
+
+  @@map("sla_policies")
+}
+
+// ─────────────────────────────────────────
+// MÓDULO 3 — CANAL DE DENUNCIAS
+// ─────────────────────────────────────────
+
+model Complaint {
+  id            String            @id @default(cuid())
+  trackingCode  String            @unique
+  category      ComplaintCategory
+  description   String
+  status        ComplaintStatus   @default(RECIBIDA)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  internalNotes ComplaintNote[]
+  statusHistory ComplaintStatusHistory[]
+  auditLogs     ComplaintAuditLog[]
+
+  @@map("complaints")
+}
+
+model ComplaintNote {
+  id          String    @id @default(cuid())
+  content     String
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@map("complaint_notes")
+}
+
+model ComplaintStatusHistory {
+  id          String           @id @default(cuid())
+  complaintId String
+  complaint   Complaint        @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  fromStatus  ComplaintStatus?
+  toStatus    ComplaintStatus
+  changedAt   DateTime         @default(now())
+
+  @@map("complaint_status_history")
+}
+
+model ComplaintAuditLog {
+  id          String    @id @default(cuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  action      String
+  accessedAt  DateTime  @default(now())
+
+  @@map("complaint_audit_logs")
+}
+
+// ─────────────────────────────────────────
+// NOTIFICACIONES
+// ─────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}

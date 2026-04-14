@@ -3,7 +3,20 @@
     "allow": [
       "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
       "Read(//c/Users/itjoy/Desarrollo/**)",
-      "Bash(npx create-next-app@latest tq-help --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)"
+      "Bash(npx create-next-app@latest tq-help --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(mkdir -p /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/tickets/\\\\[id\\\\])",
+      "Bash(mkdir -p /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/tickets/\\\\[id\\\\]/comments)",
+      "Bash(mkdir -p /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/tickets/\\\\[id\\\\]/convert)",
+      "Bash(mkdir -p /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/features/\\\\[id\\\\]/vote)",
+      "Bash(mkdir -p /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/features/\\\\[id\\\\]/comments)",
+      "Bash(mkdir -p /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/complaints/\\\\[id\\\\])",
+      "Bash(mkdir -p \"/c/Users/itjoy/Desarrollo/TQ-HELP/src/app/tickets/[id]\")",
+      "Bash(mkdir -p \"/c/Users/itjoy/Desarrollo/TQ-HELP/src/app/peticiones/[id]\")",
+      "Bash(npx tsc:*)",
+      "Bash(npm list:*)",
+      "Bash(git add:*)"
     ]
   }
 }
