@@ -21,7 +21,8 @@
       "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")",
       "Bash(grep -l \"import.*auth\\\\|import.*prisma\\\\|import.*mail\" /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/**/*.tsx)",
       "Bash(grep -E \"^import.*from.*@/lib/auth|^import.*from.*@/lib/prisma|^import.*from.*@/lib/mail\" /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/**/*.tsx)",
-      "Bash(xargs head:*)"
+      "Bash(xargs head:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

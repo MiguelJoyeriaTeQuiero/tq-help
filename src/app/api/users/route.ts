@@ -13,6 +13,17 @@ const createSchema = z.object({
   department: z.enum(["MARKETING", "LOGISTICA", "IT", "RRHH", "CONTABILIDAD", "PRODUCTO", "DIRECCION"]),
 });
 
+function generatePasswordFromName(name: string): string {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+  const numbers = Math.floor(1000 + Math.random() * 9000);
+  return `${initials}${numbers}!`;
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -55,8 +66,8 @@ export async function POST(req: NextRequest) {
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) return NextResponse.json({ error: "Email ya en uso" }, { status: 409 });
 
-  // Generar contraseña temporal aleatoria
-  const tempPassword = Math.random().toString(36).slice(-8) + "A1!";
+  // Generar contraseña con iniciales + 4 números + !
+  const tempPassword = generatePasswordFromName(name);
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
   const user = await prisma.user.create({
@@ -80,5 +91,6 @@ export async function POST(req: NextRequest) {
 
   await sendWelcomeEmail(email, name, tempPassword).catch(() => {});
 
-  return NextResponse.json(user, { status: 201 });
+  // Devolver también la contraseña generada para que el admin pueda comunicarla
+  return NextResponse.json({ ...user, generatedPassword: tempPassword }, { status: 201 });
 }

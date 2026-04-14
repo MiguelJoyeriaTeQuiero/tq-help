@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/permissions";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -9,7 +10,20 @@ const updateSchema = z.object({
   role: z.enum(["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"]).optional(),
   department: z.enum(["MARKETING", "LOGISTICA", "IT", "RRHH", "CONTABILIDAD", "PRODUCTO", "DIRECCION"]).optional(),
   isActive: z.boolean().optional(),
+  resetPassword: z.boolean().optional(),
+  newPassword: z.string().min(4).max(100).optional(),
 });
+
+function generatePasswordFromName(name: string): string {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+  const numbers = Math.floor(1000 + Math.random() * 9000);
+  return `${initials}${numbers}!`;
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -25,9 +39,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  const { resetPassword, newPassword, ...rest } = parsed.data;
+
+  // Si se pide resetear contraseña
+  if (resetPassword) {
+    const target = await prisma.user.findUnique({ where: { id }, select: { name: true } });
+    if (!target) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+
+    const generated = newPassword ?? generatePasswordFromName(target.name);
+    const hash = await bcrypt.hash(generated, 12);
+
+    await prisma.user.update({
+      where: { id },
+      data: { passwordHash: hash, mustChangePassword: true },
+    });
+
+    return NextResponse.json({ ok: true, generatedPassword: generated });
+  }
+
   const user = await prisma.user.update({
     where: { id },
-    data: parsed.data as any,
+    data: rest as any,
     select: { id: true, name: true, email: true, role: true, department: true, isActive: true },
   });
 
