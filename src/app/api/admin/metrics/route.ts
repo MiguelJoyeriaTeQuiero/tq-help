@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
   const [slaBreaches, inProgressTickets] = await Promise.all([
     prisma.ticket.count({
       where: {
-        slaDueAt: { lt: new Date() },
+        slaDeadline: { lt: new Date() },
         status: { notIn: ["RESUELTO", "CERRADO"] },
       },
     }),
