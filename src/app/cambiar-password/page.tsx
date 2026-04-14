@@ -1,23 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function CambiarPasswordPage() {
-  const router = useRouter();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (next !== confirm) { setError("Las contraseñas no coinciden"); return; }
-    if (next.length < 8) { setError("La contraseña debe tener al menos 8 caracteres"); return; }
+    if (next.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); return; }
 
     setLoading(true);
     const res = await fetch("/api/users/me/password", {
@@ -31,8 +31,10 @@ export default function CambiarPasswordPage() {
       const d = await res.json();
       setError(d.error ?? "Error al cambiar la contraseña");
     } else {
-      router.push("/tickets");
-      router.refresh();
+      // El JWT sigue teniendo mustChangePassword=true — hay que cerrar sesión
+      // y volver a iniciarla para que NextAuth emita un token limpio
+      setDone(true);
+      setTimeout(() => signOut({ callbackUrl: "/login" }), 1500);
     }
   };
 
@@ -44,6 +46,11 @@ export default function CambiarPasswordPage() {
           <p className="text-sm text-slate-500 mb-6">
             Es tu primer acceso. Debes establecer una contraseña personal.
           </p>
+          {done && (
+            <div className="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+              ✓ Contraseña cambiada. Redirigiendo al login...
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="password"
