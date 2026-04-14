@@ -72,6 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       await prisma.notification.create({
         data: {
           userId: mentionedUser.id,
+          type: "MENTION",
           title: "Te han mencionado",
           message: `${session.user.name} te mencionó en una incidencia`,
           link: `/tickets/${id}`,
