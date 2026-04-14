@@ -38,8 +38,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-indigo-600">TQ-HELP</h1>
-          <p className="mt-2 text-slate-500 text-sm">Sistema de gestión interna</p>
+          <img src="/logo.svg" alt="Logo" className="h-12 w-auto mx-auto mb-4" />
+          <p className="text-slate-500 text-sm">Sistema de gestión interna</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
           <h2 className="text-lg font-semibold text-slate-900 mb-6">Iniciar sesión</h2>
