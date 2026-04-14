@@ -9,22 +9,15 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUpload } from "@/components/ui/file-upload";
-
-const DEPT_OPTIONS = [
-  { value: "IT", label: "IT" },
-  { value: "MARKETING", label: "Marketing" },
-  { value: "LOGISTICA", label: "Logística" },
-  { value: "RRHH", label: "RRHH" },
-  { value: "CONTABILIDAD", label: "Contabilidad" },
-  { value: "PRODUCTO", label: "Producto" },
-  { value: "DIRECCION", label: "Dirección" },
-];
+import { useDepartments } from "@/hooks/use-departments";
 
 export default function NuevaPeticionPage() {
   const router = useRouter();
+  const { departments } = useDepartments();
+  const deptOptions = departments.map((d) => ({ value: d.key, label: d.label }));
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [targetDept, setTargetDept] = useState("IT");
+  const [targetDept, setTargetDept] = useState("");
   const [attachments, setAttachments] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -74,7 +67,7 @@ export default function NuevaPeticionPage() {
               />
               <Select
                 label="Departamento responsable *"
-                options={DEPT_OPTIONS}
+                options={deptOptions}
                 value={targetDept}
                 onChange={(e) => setTargetDept(e.target.value)}
               />

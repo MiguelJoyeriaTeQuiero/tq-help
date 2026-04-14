@@ -1,4 +1,4 @@
-import { Role, Department } from "@prisma/client";
+import { Role } from "@prisma/client";
 import "next-auth";
 
 declare module "next-auth" {
@@ -8,7 +8,7 @@ declare module "next-auth" {
       name: string;
       email: string;
       role: Role;
-      department: Department;
+      department: string;
       mustChangePassword: boolean;
     };
   }
@@ -18,7 +18,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
-    department: Department;
+    department: string;
     mustChangePassword: boolean;
   }
 }

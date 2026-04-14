@@ -5,7 +5,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeatureStatusBadge } from "@/components/features/feature-status-badge";
 import { Badge } from "@/components/ui/badge";
-import { DEPARTMENT_LABELS } from "@/lib/utils";
+import { getDeptLabel } from "@/lib/utils";
 import { HandThumbUpIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
@@ -47,7 +47,7 @@ export default function RoadmapPage() {
                     <Card className="p-3 hover:shadow-md transition-shadow cursor-pointer">
                       <p className="text-sm font-medium text-slate-900 line-clamp-2">{f.title}</p>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-slate-400">{DEPARTMENT_LABELS[f.targetDept as keyof typeof DEPARTMENT_LABELS]}</span>
+                        <span className="text-xs text-slate-400">{getDeptLabel(f.targetDept)}</span>
                         <span className="flex items-center gap-1 text-xs text-slate-500">
                           <HandThumbUpIcon className="h-3 w-3" />{f.voteCount}
                         </span>

@@ -1,18 +1,18 @@
-import { Role, Department } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 type SessionUser = {
   id: string;
   role: Role;
-  department: Department;
+  department: string;
 };
 
-export function canManageTickets(user: SessionUser, targetDept?: Department): boolean {
+export function canManageTickets(user: SessionUser, targetDept?: string): boolean {
   if (user.role === "SUPERADMIN") return true;
   if (user.role === "DEPT_ADMIN" && targetDept && user.department === targetDept) return true;
   return false;
 }
 
-export function canSeeInternalComments(user: SessionUser, targetDept?: Department): boolean {
+export function canSeeInternalComments(user: SessionUser, targetDept?: string): boolean {
   if (user.role === "SUPERADMIN") return true;
   if (user.role === "DEPT_ADMIN" && targetDept && user.department === targetDept) return true;
   return false;

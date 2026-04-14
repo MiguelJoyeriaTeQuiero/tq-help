@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeatureStatusBadge } from "@/components/features/feature-status-badge";
 import { Badge } from "@/components/ui/badge";
-import { DEPARTMENT_LABELS, FEATURE_STATUS_LABELS } from "@/lib/utils";
+import { getDeptLabel, FEATURE_STATUS_LABELS } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { HandThumbUpIcon, LockClosedIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
@@ -183,11 +183,11 @@ export default function PeticionDetailPage({ params }: { params: Promise<{ id: s
               <CardContent className="space-y-3 text-sm">
                 <div>
                   <span className="text-slate-500">Origen</span>
-                  <p className="font-medium">{DEPARTMENT_LABELS[feature.originDept as keyof typeof DEPARTMENT_LABELS]}</p>
+                  <p className="font-medium">{getDeptLabel(feature.originDept)}</p>
                 </div>
                 <div>
                   <span className="text-slate-500">Responsable</span>
-                  <p className="font-medium">{DEPARTMENT_LABELS[feature.targetDept as keyof typeof DEPARTMENT_LABELS]}</p>
+                  <p className="font-medium">{getDeptLabel(feature.targetDept)}</p>
                 </div>
                 {feature.convertedFrom && (
                   <div>

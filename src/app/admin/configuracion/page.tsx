@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
 import { TICKET_PRIORITY_LABELS } from "@/lib/utils";
-import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -55,6 +55,7 @@ export default function ConfiguracionPage() {
   return (
     <AppLayout title="Configuración">
       <div className="max-w-3xl mx-auto space-y-6">
+        <DepartmentsSection />
         <TagsSection />
         <SlaSection />
       </div>
@@ -368,6 +369,199 @@ function SlaSection() {
           * Los cambios de SLA se aplican a los nuevos tickets. Los existentes mantienen su fecha límite original.
         </p>
       </CardContent>
+    </Card>
+  );
+}
+
+// ── Sección de Departamentos ───────────────────────────────────────────────
+
+interface Dept {
+  id: string;
+  key: string;
+  label: string;
+  active: boolean;
+  order: number;
+}
+
+function DepartmentsSection() {
+  const [depts, setDepts] = useState<Dept[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editDept, setEditDept] = useState<Dept | null>(null);
+  const [form, setForm] = useState({ key: "", label: "" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const load = () =>
+    fetch("/api/departments?all=1")
+      .then((r) => r.json())
+      .then((d) => setDepts(Array.isArray(d) ? d : []));
+
+  useEffect(() => { load(); }, []);
+
+  const openCreate = () => {
+    setEditDept(null);
+    setForm({ key: "", label: "" });
+    setError("");
+    setModalOpen(true);
+  };
+
+  const openEdit = (dept: Dept) => {
+    setEditDept(dept);
+    setForm({ key: dept.key, label: dept.label });
+    setError("");
+    setModalOpen(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.label.trim()) { setError("El nombre es obligatorio"); return; }
+    if (!editDept && !form.key.trim()) { setError("La clave es obligatoria"); return; }
+    setSaving(true);
+    setError("");
+
+    const url = editDept ? `/api/departments/${editDept.id}` : "/api/departments";
+    const method = editDept ? "PATCH" : "POST";
+    const body = editDept ? { label: form.label } : { key: form.key.toUpperCase().replace(/\s+/g, "_"), label: form.label };
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    setSaving(false);
+
+    if (!res.ok) {
+      const d = await res.json();
+      setError(d.error ?? "Error al guardar");
+      return;
+    }
+    setModalOpen(false);
+    load();
+  };
+
+  const handleToggle = async (dept: Dept) => {
+    setTogglingId(dept.id);
+    await fetch(`/api/departments/${dept.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: !dept.active }),
+    });
+    setTogglingId(null);
+    load();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <BuildingOfficeIcon className="h-5 w-5 text-indigo-500" />
+              Departamentos
+            </CardTitle>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Gestiona los departamentos disponibles en toda la aplicación
+            </p>
+          </div>
+          <Button size="sm" onClick={openCreate}>
+            <PlusIcon className="mr-1 h-4 w-4" /> Nuevo departamento
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {depts.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-6">No hay departamentos configurados.</p>
+        ) : (
+          <div className="space-y-2">
+            {depts
+              .sort((a, b) => a.order - b.order)
+              .map((dept) => (
+                <div
+                  key={dept.id}
+                  className={`flex items-center justify-between rounded-xl border px-4 py-3 transition-opacity ${
+                    dept.active ? "border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-700" : "border-slate-100 bg-slate-50 opacity-50 dark:bg-slate-900/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+                      <BuildingOfficeIcon className="h-4 w-4 text-indigo-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{dept.label}</p>
+                      <p className="text-xs text-slate-400 font-mono">{dept.key}</p>
+                    </div>
+                    {!dept.active && (
+                      <Badge className="bg-slate-100 text-slate-500 text-xs border border-slate-200 ml-1">Inactivo</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => openEdit(dept)}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 transition-colors"
+                      title="Editar nombre"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleToggle(dept)}
+                      disabled={togglingId === dept.id}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+                        dept.active
+                          ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          : "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      }`}
+                    >
+                      {dept.active ? "Desactivar" : "Activar"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
+        <p className="text-xs text-slate-400 mt-3">
+          * Los departamentos inactivos no aparecen en los formularios. Los datos históricos se conservan.
+        </p>
+      </CardContent>
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editDept ? "Editar departamento" : "Nuevo departamento"}
+      >
+        <form onSubmit={handleSave} className="space-y-4">
+          {!editDept && (
+            <div>
+              <Input
+                label="Clave interna"
+                placeholder="ej: VENTAS, ALMACEN, COMPRAS"
+                value={form.key}
+                onChange={(e) =>
+                  setForm({ ...form, key: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "") })
+                }
+              />
+              <p className="text-xs text-slate-400 mt-1">Solo mayúsculas, números y guiones bajos. No se puede cambiar después.</p>
+            </div>
+          )}
+          <Input
+            label="Nombre visible"
+            placeholder="ej: Ventas, Almacén, Compras..."
+            value={form.label}
+            onChange={(e) => setForm({ ...form, label: e.target.value })}
+            error={error}
+          />
+
+          <div className="flex gap-3 pt-1">
+            <Button type="submit" loading={saving}>
+              <CheckIcon className="mr-1 h-4 w-4" />
+              {editDept ? "Guardar cambios" : "Crear departamento"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+              <XMarkIcon className="mr-1 h-4 w-4" />Cancelar
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </Card>
   );
 }

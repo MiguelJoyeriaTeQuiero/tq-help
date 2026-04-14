@@ -10,7 +10,7 @@ const createSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
   role: z.enum(["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"]),
-  department: z.enum(["MARKETING", "LOGISTICA", "IT", "RRHH", "CONTABILIDAD", "PRODUCTO", "DIRECCION"]),
+  department: z.string().min(1),
 });
 
 function generatePasswordFromName(name: string): string {
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       name,
       email,
       role: role as any,
-      department: department as any,
+      department,
       passwordHash,
       mustChangePassword: true,
     },

@@ -10,16 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const DEPT_OPTIONS = [
-  { value: "IT", label: "IT" },
-  { value: "MARKETING", label: "Marketing" },
-  { value: "LOGISTICA", label: "Logística" },
-  { value: "RRHH", label: "RRHH" },
-  { value: "CONTABILIDAD", label: "Contabilidad" },
-  { value: "PRODUCTO", label: "Producto" },
-  { value: "DIRECCION", label: "Dirección" },
-];
+import { useDepartments } from "@/hooks/use-departments";
 
 const PRIORITY_OPTIONS = [
   { value: "BAJA", label: "Baja — 5 días laborables" },
@@ -31,10 +22,12 @@ const PRIORITY_OPTIONS = [
 export default function NuevoTicketPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { departments } = useDepartments();
+  const deptOptions = departments.map((d) => ({ value: d.key, label: d.label }));
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("MEDIA");
-  const [targetDept, setTargetDept] = useState("IT");
+  const [targetDept, setTargetDept] = useState("");
   const [attachments, setAttachments] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -121,7 +114,7 @@ export default function NuevoTicketPage() {
                 />
                 <Select
                   label="Departamento destino *"
-                  options={DEPT_OPTIONS}
+                  options={deptOptions}
                   value={targetDept}
                   onChange={(e) => setTargetDept(e.target.value)}
                 />

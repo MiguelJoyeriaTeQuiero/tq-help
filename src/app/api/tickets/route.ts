@@ -10,7 +10,7 @@ const createSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(10),
   priority: z.enum(["BAJA", "MEDIA", "ALTA", "CRITICA"]),
-  targetDept: z.enum(["MARKETING", "LOGISTICA", "IT", "RRHH", "CONTABILIDAD", "PRODUCTO", "DIRECCION"]),
+  targetDept: z.string().min(1),
   tagIds: z.array(z.string()).optional(),
 });
 
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       title,
       description,
       priority: priority as any,
-      targetDept: targetDept as any,
+      targetDept,
       originDept: session.user.department,
       authorId: session.user.id,
       slaDeadline,
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
   // Notificar a admins del departamento destino
   const admins = await prisma.user.findMany({
     where: {
-      department: targetDept as any,
+      department: targetDept,
       role: { in: ["DEPT_ADMIN", "SUPERADMIN"] },
       isActive: true,
     },

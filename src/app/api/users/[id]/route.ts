@@ -8,7 +8,7 @@ import { z } from "zod";
 const updateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   role: z.enum(["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"]).optional(),
-  department: z.enum(["MARKETING", "LOGISTICA", "IT", "RRHH", "CONTABILIDAD", "PRODUCTO", "DIRECCION"]).optional(),
+  department: z.string().min(1).optional(),
   isActive: z.boolean().optional(),
   resetPassword: z.boolean().optional(),
   newPassword: z.string().min(4).max(100).optional(),

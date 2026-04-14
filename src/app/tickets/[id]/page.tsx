@@ -13,7 +13,7 @@ import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { FileUpload } from "@/components/ui/file-upload";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
-import { DEPARTMENT_LABELS, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from "@/lib/utils";
+import { getDeptLabel, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowPathIcon, LockClosedIcon, PaperClipIcon } from "@heroicons/react/24/outline";
@@ -261,11 +261,11 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               <CardContent className="space-y-3 text-sm">
                 <div>
                   <span className="text-slate-500">Departamento origen</span>
-                  <p className="font-medium">{DEPARTMENT_LABELS[ticket.originDept as keyof typeof DEPARTMENT_LABELS]}</p>
+                  <p className="font-medium">{getDeptLabel(ticket.originDept)}</p>
                 </div>
                 <div>
                   <span className="text-slate-500">Departamento destino</span>
-                  <p className="font-medium">{DEPARTMENT_LABELS[ticket.targetDept as keyof typeof DEPARTMENT_LABELS]}</p>
+                  <p className="font-medium">{getDeptLabel(ticket.targetDept)}</p>
                 </div>
                 {ticket.slaDeadline && (
                   <div>

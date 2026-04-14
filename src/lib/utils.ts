@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Department, TicketPriority, TicketStatus, FeatureStatus, ComplaintStatus, Role } from "@prisma/client";
+import { TicketPriority, TicketStatus, FeatureStatus, ComplaintStatus, Role } from "@prisma/client";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,7 +16,8 @@ export function generateTrackingCode(): string {
   return code;
 }
 
-export const DEPARTMENT_LABELS: Record<Department, string> = {
+// Static fallback labels; UI forms should use useDepartments() hook for live list
+export const DEPARTMENT_LABELS: Record<string, string> = {
   MARKETING: "Marketing",
   LOGISTICA: "Logística",
   IT: "IT",
@@ -25,6 +26,10 @@ export const DEPARTMENT_LABELS: Record<Department, string> = {
   PRODUCTO: "Producto",
   DIRECCION: "Dirección",
 };
+
+export function getDeptLabel(key: string): string {
+  return DEPARTMENT_LABELS[key] ?? key;
+}
 
 export const ROLE_LABELS: Record<Role, string> = {
   SUPERADMIN: "Superadmin",

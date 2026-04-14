@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { Badge } from "@/components/ui/badge";
-import { DEPARTMENT_LABELS } from "@/lib/utils";
+import { getDeptLabel } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -129,7 +129,7 @@ export default function TicketsPage() {
                       <PriorityBadge priority={ticket.priority} />
                       <span className="text-xs text-slate-400">·</span>
                       <span className="text-xs text-slate-500">
-                        {DEPARTMENT_LABELS[ticket.targetDept as keyof typeof DEPARTMENT_LABELS]}
+                        {getDeptLabel(ticket.targetDept)}
                       </span>
                       <span className="text-xs text-slate-400">·</span>
                       <span className="text-xs text-slate-400">
@@ -199,7 +199,7 @@ export default function TicketsPage() {
                           <TicketStatusBadge status={ticket.status} />
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell text-slate-500">
-                          {DEPARTMENT_LABELS[ticket.targetDept as keyof typeof DEPARTMENT_LABELS]}
+                          {getDeptLabel(ticket.targetDept)}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell text-slate-400">
                           {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true, locale: es })}

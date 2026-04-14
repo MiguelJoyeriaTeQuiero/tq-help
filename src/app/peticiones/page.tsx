@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FeatureStatusBadge } from "@/components/features/feature-status-badge";
-import { DEPARTMENT_LABELS } from "@/lib/utils";
+import { getDeptLabel } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
@@ -118,7 +118,7 @@ export default function PeticionesPage() {
                   </div>
                   <p className="text-sm text-slate-500 line-clamp-2">{f.description}</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    {DEPARTMENT_LABELS[f.originDept as keyof typeof DEPARTMENT_LABELS]} → {DEPARTMENT_LABELS[f.targetDept as keyof typeof DEPARTMENT_LABELS]} ·{" "}
+                    {getDeptLabel(f.originDept)} → {getDeptLabel(f.targetDept)} ·{" "}
                     {formatDistanceToNow(new Date(f.createdAt), { addSuffix: true, locale: es })} ·{" "}
                     {f._count.comments} comentarios
                   </p>

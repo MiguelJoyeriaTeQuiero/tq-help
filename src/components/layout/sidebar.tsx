@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { cn, DEPARTMENT_LABELS, ROLE_LABELS } from "@/lib/utils";
+import { cn, getDeptLabel, ROLE_LABELS } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
 import {
   TicketIcon,
@@ -83,7 +83,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         <div className="border-t border-slate-200 px-4 py-3">
           <p className="text-sm font-medium text-slate-900 truncate">{session.user.name}</p>
           <p className="text-xs text-slate-500 truncate">
-            {DEPARTMENT_LABELS[session.user.department]} · {ROLE_LABELS[session.user.role]}
+            {getDeptLabel(session.user.department)} · {ROLE_LABELS[session.user.role]}
           </p>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}

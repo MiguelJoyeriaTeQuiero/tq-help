@@ -17,15 +17,7 @@ enum Role {
   VIEWER
 }
 
-enum Department {
-  MARKETING
-  LOGISTICA
-  IT
-  RRHH
-  CONTABILIDAD
-  PRODUCTO
-  DIRECCION
-}
+// Department is now stored as a free String; valid keys are managed via DepartmentConfig
 
 enum FeatureStatus {
   PENDIENTE
@@ -80,7 +72,7 @@ model User {
   email              String     @unique
   passwordHash       String
   role               Role       @default(EMPLOYEE)
-  department         Department
+  department         String
   mustChangePassword Boolean    @default(true)
   isActive           Boolean    @default(true)
   createdAt          DateTime   @default(now())
@@ -209,8 +201,8 @@ model FeatureRequest {
   title                 String
   description           String
   status                FeatureStatus  @default(PENDIENTE)
-  originDept            Department
-  targetDept            Department
+  originDept            String
+  targetDept            String
   authorId              String
   author                User           @relation(fields: [authorId], references: [id])
   voteCount             Int            @default(0)
@@ -276,8 +268,8 @@ model Ticket {
   description   String
   status        TicketStatus    @default(ABIERTO)
   priority      TicketPriority  @default(MEDIA)
-  originDept    Department
-  targetDept    Department
+  originDept    String
+  targetDept    String
   authorId      String
   author        User            @relation(fields: [authorId], references: [id])
   assigneeId    String?
@@ -320,6 +312,21 @@ model TicketStatusHistory {
   changedAt  DateTime      @default(now())
 
   @@map("ticket_status_history")
+}
+
+// ─────────────────────────────────────────
+// DEPARTAMENTOS (dinámicos)
+// ─────────────────────────────────────────
+
+model DepartmentConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("department_configs")
 }
 
 // ─────────────────────────────────────────

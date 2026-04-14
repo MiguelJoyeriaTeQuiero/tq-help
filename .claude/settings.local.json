@@ -22,7 +22,9 @@
       "Bash(grep -l \"import.*auth\\\\|import.*prisma\\\\|import.*mail\" /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/**/*.tsx)",
       "Bash(grep -E \"^import.*from.*@/lib/auth|^import.*from.*@/lib/prisma|^import.*from.*@/lib/mail\" /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/**/*.tsx)",
       "Bash(xargs head:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies['@react-pdf/renderer']\\)\")",
+      "Bash(xargs grep:*)"
     ]
   }
 }

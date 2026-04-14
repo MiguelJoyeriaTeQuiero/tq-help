@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeatureStatusBadge } from "@/components/features/feature-status-badge";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { TicketStatusBadge } from "@/components/tickets/status-badge";
-import { DEPARTMENT_LABELS } from "@/lib/utils";
+import { getDeptLabel } from "@/lib/utils";
 import { HandThumbUpIcon, TicketIcon, ClockIcon, FlagIcon, ExclamationTriangleIcon, ArrowPathIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
@@ -182,7 +182,7 @@ export default function AdminPage() {
                 <ul className="space-y-2">
                   {metrics.ticketsByDept?.map((d: any) => (
                     <li key={d.targetDept} className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">{DEPARTMENT_LABELS[d.targetDept as keyof typeof DEPARTMENT_LABELS]}</span>
+                      <span className="text-slate-600">{getDeptLabel(d.targetDept)}</span>
                       <span className="font-semibold text-slate-900">{d._count.id}</span>
                     </li>
                   ))}

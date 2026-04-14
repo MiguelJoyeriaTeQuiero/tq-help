@@ -9,15 +9,10 @@ import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { DEPARTMENT_LABELS, ROLE_LABELS } from "@/lib/utils";
+import { ROLE_LABELS } from "@/lib/utils";
+import { useDepartments } from "@/hooks/use-departments";
 import { PlusIcon, KeyIcon, ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/outline";
 
-const DEPT_OPTIONS = [
-  { value: "IT", label: "IT" }, { value: "MARKETING", label: "Marketing" },
-  { value: "LOGISTICA", label: "Logística" }, { value: "RRHH", label: "RRHH" },
-  { value: "CONTABILIDAD", label: "Contabilidad" }, { value: "PRODUCTO", label: "Producto" },
-  { value: "DIRECCION", label: "Dirección" },
-];
 const ROLE_OPTIONS = [
   { value: "EMPLOYEE", label: "Empleado" }, { value: "DEPT_ADMIN", label: "Admin de departamento" },
   { value: "VIEWER", label: "Viewer" }, { value: "SUPERADMIN", label: "Superadmin" },
@@ -40,12 +35,14 @@ function CopyButton({ text }: { text: string }) {
 
 export default function UsuariosPage() {
   const { data: session } = useSession();
+  const { departments, getDeptLabel } = useDepartments();
+  const deptOptions = departments.map((d) => ({ value: d.key, label: d.label }));
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal crear usuario
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", role: "EMPLOYEE", department: "IT" });
+  const [form, setForm] = useState({ name: "", email: "", role: "EMPLOYEE", department: "" });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -158,7 +155,7 @@ export default function UsuariosPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-slate-600 hidden md:table-cell">
-                        {DEPARTMENT_LABELS[u.department as keyof typeof DEPARTMENT_LABELS]}
+                        {getDeptLabel(u.department)}
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
                         <Badge className="bg-slate-100 text-slate-700">{ROLE_LABELS[u.role as keyof typeof ROLE_LABELS]}</Badge>
@@ -206,7 +203,7 @@ export default function UsuariosPage() {
           <Input label="Nombre completo *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           <Input label="Email corporativo *" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
           <div className="grid grid-cols-2 gap-3">
-            <Select label="Departamento *" options={DEPT_OPTIONS} value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
+            <Select label="Departamento *" options={deptOptions} value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
             <Select label="Rol *" options={ROLE_OPTIONS} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} />
           </div>
           {createError && <p className="text-sm text-red-600">{createError}</p>}
