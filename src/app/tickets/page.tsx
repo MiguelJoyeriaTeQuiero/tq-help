@@ -104,67 +104,116 @@ export default function TicketsPage() {
           )}
         </div>
 
-        {/* Tabla/lista */}
+        {/* Lista */}
         {loading ? (
           <div className="text-center py-12 text-slate-400">Cargando...</div>
         ) : tickets.length === 0 ? (
           <div className="text-center py-12 text-slate-400">No hay incidencias</div>
         ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left">
-                    <th className="px-4 py-3 font-medium text-slate-500">Incidencia</th>
-                    <th className="px-4 py-3 font-medium text-slate-500">Prioridad</th>
-                    <th className="px-4 py-3 font-medium text-slate-500">Estado</th>
-                    <th className="px-4 py-3 font-medium text-slate-500 hidden md:table-cell">Dept. destino</th>
-                    <th className="px-4 py-3 font-medium text-slate-500 hidden lg:table-cell">Creado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {tickets.map((ticket) => (
-                    <tr key={ticket.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <Link href={`/tickets/${ticket.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
-                          {ticket.slaBreached && (
-                            <ExclamationTriangleIcon className="inline h-4 w-4 text-red-500 mr-1" />
-                          )}
-                          {ticket.title}
-                        </Link>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {ticket.tags?.map((tt: any) => (
-                            <Badge
-                              key={tt.tag.id}
-                              className="text-white text-[10px] px-1.5 py-0"
-                              style={{ backgroundColor: tt.tag.color }}
-                            >
-                              {tt.tag.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <PriorityBadge priority={ticket.priority} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <TicketStatusBadge status={ticket.status} />
-                      </td>
-                      <td className="px-4 py-3 hidden md:table-cell text-slate-500">
+          <>
+            {/* Vista móvil: cards */}
+            <div className="flex flex-col gap-2 md:hidden">
+              {tickets.map((ticket) => (
+                <Link key={ticket.id} href={`/tickets/${ticket.id}`}>
+                  <Card className="p-3 hover:shadow-md transition-shadow active:scale-[0.99]">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-slate-900 text-sm leading-snug">
+                        {ticket.slaBreached && (
+                          <ExclamationTriangleIcon className="inline h-3.5 w-3.5 text-red-500 mr-1 -mt-0.5" />
+                        )}
+                        {ticket.title}
+                      </p>
+                      <TicketStatusBadge status={ticket.status} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      <PriorityBadge priority={ticket.priority} />
+                      <span className="text-xs text-slate-400">·</span>
+                      <span className="text-xs text-slate-500">
                         {DEPARTMENT_LABELS[ticket.targetDept as keyof typeof DEPARTMENT_LABELS]}
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell text-slate-400">
+                      </span>
+                      <span className="text-xs text-slate-400">·</span>
+                      <span className="text-xs text-slate-400">
                         {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true, locale: es })}
-                      </td>
+                      </span>
+                    </div>
+                    {ticket.tags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {ticket.tags.map((tt: any) => (
+                          <Badge
+                            key={tt.tag.id}
+                            className="text-white text-[10px] px-1.5 py-0"
+                            style={{ backgroundColor: tt.tag.color }}
+                          >
+                            {tt.tag.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                </Link>
+              ))}
+              <p className="text-xs text-slate-400 text-center py-1">
+                {total} incidencia{total !== 1 ? "s" : ""}
+              </p>
+            </div>
+
+            {/* Vista escritorio: tabla */}
+            <Card className="hidden md:block">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left">
+                      <th className="px-4 py-3 font-medium text-slate-500">Incidencia</th>
+                      <th className="px-4 py-3 font-medium text-slate-500">Prioridad</th>
+                      <th className="px-4 py-3 font-medium text-slate-500">Estado</th>
+                      <th className="px-4 py-3 font-medium text-slate-500 hidden md:table-cell">Dept. destino</th>
+                      <th className="px-4 py-3 font-medium text-slate-500 hidden lg:table-cell">Creado</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-4 py-3 border-t border-slate-100 text-sm text-slate-500">
-              {total} incidencia{total !== 1 ? "s" : ""}
-            </div>
-          </Card>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {tickets.map((ticket) => (
+                      <tr key={ticket.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <Link href={`/tickets/${ticket.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
+                            {ticket.slaBreached && (
+                              <ExclamationTriangleIcon className="inline h-4 w-4 text-red-500 mr-1" />
+                            )}
+                            {ticket.title}
+                          </Link>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {ticket.tags?.map((tt: any) => (
+                              <Badge
+                                key={tt.tag.id}
+                                className="text-white text-[10px] px-1.5 py-0"
+                                style={{ backgroundColor: tt.tag.color }}
+                              >
+                                {tt.tag.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <PriorityBadge priority={ticket.priority} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <TicketStatusBadge status={ticket.status} />
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell text-slate-500">
+                          {DEPARTMENT_LABELS[ticket.targetDept as keyof typeof DEPARTMENT_LABELS]}
+                        </td>
+                        <td className="px-4 py-3 hidden lg:table-cell text-slate-400">
+                          {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true, locale: es })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-3 border-t border-slate-100 text-sm text-slate-500">
+                {total} incidencia{total !== 1 ? "s" : ""}
+              </div>
+            </Card>
+          </>
         )}
       </div>
     </AppLayout>
