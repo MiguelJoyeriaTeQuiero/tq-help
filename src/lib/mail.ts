@@ -1,8 +1,12 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM ?? "TQ-HELP <noreply@example.com>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 // ── Bienvenida / credenciales ──────────────────────────────────────────────
 
@@ -11,6 +15,8 @@ export async function sendWelcomeEmail(
   name: string,
   tempPassword: string
 ) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -36,6 +42,8 @@ export async function sendTicketUpdateEmail(
   newStatus: string,
   message?: string
 ) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -58,6 +66,8 @@ export async function sendFeatureUpdateEmail(
   featureTitle: string,
   newStatus: string
 ) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -80,6 +90,8 @@ export async function sendNewTicketAlertEmail(
   priority: string,
   originDept: string
 ) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -102,6 +114,8 @@ export async function sendSlaWarningEmail(
   ticketTitle: string,
   deadline: Date
 ) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: email,
