@@ -71,7 +71,7 @@ export default function NuevoTicketPage() {
     if (attachments.length > 0) {
       await Promise.all(
         attachments.map((a) =>
-          fetch("/api/tickets/" + ticket.id + "/attachments", {
+          fetch(`/api/tickets/${ticket.id}/attachments`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -80,7 +80,7 @@ export default function NuevoTicketPage() {
               mimeType: a.mimeType,
               size: a.size,
             }),
-          }).catch(() => {})
+          })
         )
       );
     }
