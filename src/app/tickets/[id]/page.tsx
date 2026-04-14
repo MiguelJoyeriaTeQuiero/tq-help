@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { FileUpload } from "@/components/ui/file-upload";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { DEPARTMENT_LABELS, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -44,6 +45,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const [sendingComment, setSendingComment] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [lightbox, setLightbox] = useState<{ images: { url: string; filename: string }[]; index: number } | null>(null);
 
   const load = async () => {
     const res = await fetch(`/api/tickets/${id}`);
@@ -135,17 +137,49 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               <CardHeader><CardTitle>Descripción</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-700 whitespace-pre-wrap">{ticket.description}</p>
-                {ticket.attachments?.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {ticket.attachments.map((a: any) => (
-                      <a key={a.id} href={a.storageKey} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm text-indigo-600 hover:underline">
-                        <PaperClipIcon className="h-4 w-4" />
-                        {a.filename}
-                      </a>
-                    ))}
-                  </div>
-                )}
+                {ticket.attachments?.length > 0 && (() => {
+                  const images = ticket.attachments.filter((a: any) => a.mimeType?.startsWith("image/"));
+                  const others = ticket.attachments.filter((a: any) => !a.mimeType?.startsWith("image/"));
+                  const lightboxImages = images.map((a: any) => ({ url: a.storageKey, filename: a.filename }));
+                  return (
+                    <div className="mt-4 space-y-3">
+                      {/* Miniaturas de imágenes */}
+                      {images.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {images.map((a: any, i: number) => (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() => setLightbox({ images: lightboxImages, index: i })}
+                              className="group relative overflow-hidden rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                            >
+                              <img
+                                src={a.storageKey}
+                                alt={a.filename}
+                                className="h-24 w-24 object-cover transition-transform group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">Ver</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {/* Otros archivos */}
+                      {others.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {others.map((a: any) => (
+                            <a key={a.id} href={a.storageKey} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors">
+                              <PaperClipIcon className="h-4 w-4 flex-shrink-0" />
+                              <span className="max-w-[160px] truncate">{a.filename}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 
@@ -282,6 +316,15 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <ImageLightbox
+          images={lightbox.images}
+          initialIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </AppLayout>
   );
 }
