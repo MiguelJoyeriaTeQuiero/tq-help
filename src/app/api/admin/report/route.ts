@@ -35,7 +35,13 @@ export async function GET(req: NextRequest) {
     prisma.ticket.count({ where: { status: { in: ["ABIERTO", "EN_PROGRESO"] } } }),
     prisma.ticket.count({ where: { slaDeadline: { lt: new Date() }, status: { notIn: ["RESUELTO", "CERRADO"] } } }),
     prisma.complaint.count({ where: { createdAt: { gte: from, lte: to } } }),
-    prisma.ticket.groupBy({ by: ["targetDept"], where: { createdAt: { gte: from, lte: to } }, _count: { id: true } }),
+    prisma.$queryRaw<any[]>`
+      SELECT unnest("targetDept") AS "targetDept", COUNT(*)::int AS count
+      FROM tickets
+      WHERE "createdAt" >= ${from} AND "createdAt" <= ${to}
+      GROUP BY "targetDept"
+      ORDER BY count DESC
+    `.then((rows: any[]) => rows.map((r) => ({ targetDept: r.targetDept, _count: { id: r.count } }))),
     prisma.ticket.groupBy({ by: ["priority"], where: { createdAt: { gte: from, lte: to } }, _count: { id: true } }),
     prisma.featureRequest.findMany({
       where: { status: { notIn: ["DESCARTADO"] } },

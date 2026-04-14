@@ -187,7 +187,7 @@ export default function PeticionDetailPage({ params }: { params: Promise<{ id: s
                 </div>
                 <div>
                   <span className="text-slate-500">Responsable</span>
-                  <p className="font-medium">{getDeptLabel(feature.targetDept)}</p>
+                  <p className="font-medium">{feature.targetDept.map((k: string) => getDeptLabel(k)).join(", ")}</p>
                 </div>
                 {feature.convertedFrom && (
                   <div>

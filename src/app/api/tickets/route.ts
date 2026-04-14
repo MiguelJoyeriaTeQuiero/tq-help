@@ -10,7 +10,7 @@ const createSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(10),
   priority: z.enum(["BAJA", "MEDIA", "ALTA", "CRITICA"]),
-  targetDept: z.string().min(1),
+  targetDept: z.array(z.string().min(1)).min(1, "Selecciona al menos un departamento destino"),
   tagIds: z.array(z.string()).optional(),
 });
 
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   } else if (session.user.role === "DEPT_ADMIN") {
     // Admin de dept ve los de su departamento destino + los suyos propios
     where.OR = [
-      { targetDept: session.user.department },
+      { targetDept: { has: session.user.department } },
       { authorId: session.user.id },
     ];
   }
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   if (status) where.status = status;
   if (priority) where.priority = priority;
   if (dept) {
-    where.targetDept = dept;
+    where.targetDept = { has: dept };
   }
 
   const [tickets, total] = await Promise.all([
@@ -102,10 +102,10 @@ export async function POST(req: NextRequest) {
     data: { ticketId: ticket.id, toStatus: "ABIERTO" },
   });
 
-  // Notificar a admins del departamento destino
+  // Notificar a admins de todos los departamentos destino
   const admins = await prisma.user.findMany({
     where: {
-      department: targetDept,
+      department: { in: targetDept },
       role: { in: ["DEPT_ADMIN", "SUPERADMIN"] },
       isActive: true,
     },

@@ -99,7 +99,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
 
   const isAdminForTicket = session?.user && ticket
     ? (session.user.role === "SUPERADMIN" ||
-       (session.user.role === "DEPT_ADMIN" && session.user.department === ticket.targetDept))
+       (session.user.role === "DEPT_ADMIN" && ticket.targetDept.includes(session.user.department)))
     : false;
 
   if (loading) return <AppLayout title="Cargando..."><div className="text-center py-12 text-slate-400">Cargando...</div></AppLayout>;
@@ -265,7 +265,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                 </div>
                 <div>
                   <span className="text-slate-500">Departamento destino</span>
-                  <p className="font-medium">{getDeptLabel(ticket.targetDept)}</p>
+                  <p className="font-medium">{ticket.targetDept.map((k: string) => getDeptLabel(k)).join(", ")}</p>
                 </div>
                 {ticket.slaDeadline && (
                   <div>

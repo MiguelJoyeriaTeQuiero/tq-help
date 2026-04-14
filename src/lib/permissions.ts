@@ -6,15 +6,21 @@ type SessionUser = {
   department: string;
 };
 
-export function canManageTickets(user: SessionUser, targetDept?: string): boolean {
+export function canManageTickets(user: SessionUser, targetDept?: string | string[]): boolean {
   if (user.role === "SUPERADMIN") return true;
-  if (user.role === "DEPT_ADMIN" && targetDept && user.department === targetDept) return true;
+  if (user.role === "DEPT_ADMIN" && targetDept) {
+    const depts = Array.isArray(targetDept) ? targetDept : [targetDept];
+    return depts.includes(user.department);
+  }
   return false;
 }
 
-export function canSeeInternalComments(user: SessionUser, targetDept?: string): boolean {
+export function canSeeInternalComments(user: SessionUser, targetDept?: string | string[]): boolean {
   if (user.role === "SUPERADMIN") return true;
-  if (user.role === "DEPT_ADMIN" && targetDept && user.department === targetDept) return true;
+  if (user.role === "DEPT_ADMIN" && targetDept) {
+    const depts = Array.isArray(targetDept) ? targetDept : [targetDept];
+    return depts.includes(user.department);
+  }
   return false;
 }
 

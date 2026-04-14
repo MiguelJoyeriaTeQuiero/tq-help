@@ -6,7 +6,7 @@ import { z } from "zod";
 const createSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(10),
-  targetDept: z.string().min(1),
+  targetDept: z.array(z.string().min(1)).min(1, "Selecciona al menos un departamento destino"),
   tagIds: z.array(z.string()).optional(),
 });
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   const where: any = {};
   if (status) where.status = status;
-  if (dept) where.targetDept = dept;
+  if (dept) where.targetDept = { has: dept };
 
   const [features, total] = await Promise.all([
     prisma.featureRequest.findMany({

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUpload } from "@/components/ui/file-upload";
 import { useDepartments } from "@/hooks/use-departments";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 export default function NuevaPeticionPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function NuevaPeticionPage() {
   const deptOptions = departments.map((d) => ({ value: d.key, label: d.label }));
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [targetDept, setTargetDept] = useState("");
+  const [targetDept, setTargetDept] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,7 @@ export default function NuevaPeticionPage() {
     const errs: Record<string, string> = {};
     if (title.trim().length < 5) errs.title = "Mínimo 5 caracteres";
     if (description.trim().length < 10) errs.description = "Mínimo 10 caracteres";
+    if (targetDept.length === 0) errs.targetDept = "Selecciona al menos un departamento";
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
     setLoading(true);
@@ -65,11 +67,12 @@ export default function NuevaPeticionPage() {
                 error={errors.description}
                 className="min-h-[150px]"
               />
-              <Select
-                label="Departamento responsable *"
+              <MultiSelect
+                label="Departamento(s) responsable *"
                 options={deptOptions}
                 value={targetDept}
-                onChange={(e) => setTargetDept(e.target.value)}
+                onChange={setTargetDept}
+                placeholder="Seleccionar departamentos..."
               />
               <div>
                 <p className="text-sm font-medium text-slate-700 mb-2">Adjuntos (opcional)</p>

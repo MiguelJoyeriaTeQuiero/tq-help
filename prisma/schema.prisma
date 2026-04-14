@@ -202,7 +202,7 @@ model FeatureRequest {
   description           String
   status                FeatureStatus  @default(PENDIENTE)
   originDept            String
-  targetDept            String
+  targetDept            String[]
   authorId              String
   author                User           @relation(fields: [authorId], references: [id])
   voteCount             Int            @default(0)
@@ -269,7 +269,7 @@ model Ticket {
   status        TicketStatus    @default(ABIERTO)
   priority      TicketPriority  @default(MEDIA)
   originDept    String
-  targetDept    String
+  targetDept    String[]
   authorId      String
   author        User            @relation(fields: [authorId], references: [id])
   assigneeId    String?

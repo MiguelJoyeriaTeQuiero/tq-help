@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDepartments } from "@/hooks/use-departments";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 const PRIORITY_OPTIONS = [
   { value: "BAJA", label: "Baja — 5 días laborables" },
@@ -27,7 +28,7 @@ export default function NuevoTicketPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("MEDIA");
-  const [targetDept, setTargetDept] = useState("");
+  const [targetDept, setTargetDept] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,7 @@ export default function NuevoTicketPage() {
     const errs: Record<string, string> = {};
     if (title.trim().length < 5) errs.title = "El título debe tener al menos 5 caracteres";
     if (description.trim().length < 10) errs.description = "La descripción debe tener al menos 10 caracteres";
+    if (targetDept.length === 0) errs.targetDept = "Selecciona al menos un departamento destino";
     return errs;
   };
 
@@ -112,11 +114,13 @@ export default function NuevoTicketPage() {
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                 />
-                <Select
-                  label="Departamento destino *"
+                <MultiSelect
+                  label="Departamento(s) destino *"
                   options={deptOptions}
                   value={targetDept}
-                  onChange={(e) => setTargetDept(e.target.value)}
+                  onChange={setTargetDept}
+                  placeholder="Seleccionar departamentos..."
+                  error={errors.targetDept}
                 />
               </div>
               <div>

@@ -118,7 +118,7 @@ export default function PeticionesPage() {
                   </div>
                   <p className="text-sm text-slate-500 line-clamp-2">{f.description}</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    {getDeptLabel(f.originDept)} → {getDeptLabel(f.targetDept)} ·{" "}
+                    {getDeptLabel(f.originDept)} → {f.targetDept.map((k: string) => getDeptLabel(k)).join(", ")} ·{" "}
                     {formatDistanceToNow(new Date(f.createdAt), { addSuffix: true, locale: es })} ·{" "}
                     {f._count.comments} comentarios
                   </p>

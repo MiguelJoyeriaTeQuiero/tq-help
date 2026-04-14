@@ -23,12 +23,14 @@ export async function GET(req: NextRequest) {
     // Tickets abiertos totales
     prisma.ticket.count({ where: { status: { in: ["ABIERTO", "EN_PROGRESO"] } } }),
 
-    // Tickets abiertos por departamento destino
-    prisma.ticket.groupBy({
-      by: ["targetDept"],
-      where: { status: { in: ["ABIERTO", "EN_PROGRESO"] } },
-      _count: { id: true },
-    }),
+    // Tickets abiertos por departamento destino (unnest array field)
+    prisma.$queryRaw<{ targetDept: string; _count: { id: number } }[]>`
+      SELECT unnest("targetDept") AS "targetDept", COUNT(*)::int AS count
+      FROM tickets
+      WHERE status IN ('ABIERTO', 'EN_PROGRESO')
+      GROUP BY "targetDept"
+      ORDER BY count DESC
+    `.then((rows: any[]) => rows.map((r) => ({ targetDept: r.targetDept, _count: { id: r.count } }))),
 
     // Tickets por prioridad
     prisma.ticket.groupBy({

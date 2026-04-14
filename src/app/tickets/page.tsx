@@ -129,7 +129,7 @@ export default function TicketsPage() {
                       <PriorityBadge priority={ticket.priority} />
                       <span className="text-xs text-slate-400">·</span>
                       <span className="text-xs text-slate-500">
-                        {getDeptLabel(ticket.targetDept)}
+                        {ticket.targetDept.map((k: string) => getDeptLabel(k)).join(", ")}
                       </span>
                       <span className="text-xs text-slate-400">·</span>
                       <span className="text-xs text-slate-400">
@@ -199,7 +199,7 @@ export default function TicketsPage() {
                           <TicketStatusBadge status={ticket.status} />
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell text-slate-500">
-                          {getDeptLabel(ticket.targetDept)}
+                          {ticket.targetDept.map((k: string) => getDeptLabel(k)).join(", ")}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell text-slate-400">
                           {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true, locale: es })}
