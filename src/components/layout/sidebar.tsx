@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn, DEPARTMENT_LABELS, ROLE_LABELS } from "@/lib/utils";
+import { Logo } from "@/components/ui/logo";
 import {
   TicketIcon,
   LightBulbIcon,
@@ -41,7 +42,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
       {/* Logo + botón cerrar (solo móvil) */}
       <div className="flex h-16 items-center justify-between px-5 border-b border-slate-200">
-        <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
+        <Logo className="h-8 w-auto" />
         <button
           onClick={onClose}
           className="lg:hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"

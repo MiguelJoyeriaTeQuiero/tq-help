@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <img src="/logo.svg" alt="Logo" className="h-12 w-auto mx-auto mb-4" />
+          <Logo className="h-12 w-auto mx-auto mb-4" />
           <p className="text-slate-500 text-sm">Sistema de gestión interna</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
