@@ -46,7 +46,7 @@ export function BottomNav() {
   const items = visible.map((tab, i) => ({ type: "tab" as const, tab, insertCreate: showCreate && i === middleIndex }));
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-10 flex items-end border-t border-slate-200 bg-white pb-safe">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-10 flex items-end border-t border-slate-200 bg-white pb-1">
       {items.map(({ tab, insertCreate }, i) => {
         const active = pathname.startsWith(tab.href) &&
           (tab.href !== "/admin" || pathname === "/admin" || pathname.startsWith("/admin/"));

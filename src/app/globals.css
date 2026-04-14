@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Brand primary overrides indigo */
+  --color-indigo-50: #e6f4fd;
+  --color-indigo-100: #cce9fb;
+  --color-indigo-200: #99d3f7;
+  --color-indigo-300: #66bef3;
+  --color-indigo-400: #33a8ef;
+  --color-indigo-500: #0099f2;
+  --color-indigo-600: #0099f2;
+  --color-indigo-700: #00557f;
+  --color-indigo-800: #003d5c;
+  --color-indigo-900: #002638;
+  --color-indigo-950: #00131d;
+
+  /* Accent gold color as "amber" override */
+  --color-amber-400: #c8a164;
+  --color-amber-500: #b8915a;
+  --color-amber-600: #a07840;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -7,3 +29,23 @@
 html, body {
   height: 100%;
 }
+
+/* ── Dark mode base styles ── */
+.dark body {
+  background-color: #111111;
+  color: #f1f5f9;
+}
+
+.dark .bg-white { background-color: #1e2330 !important; }
+.dark .bg-slate-50 { background-color: #111111 !important; }
+.dark .bg-slate-100 { background-color: #1e2330 !important; }
+.dark .border-slate-200 { border-color: #2d3748 !important; }
+.dark .border-slate-100 { border-color: #2d3748 !important; }
+.dark .text-slate-900 { color: #f1f5f9 !important; }
+.dark .text-slate-700 { color: #cbd5e0 !important; }
+.dark .text-slate-600 { color: #a0aec0 !important; }
+.dark .text-slate-500 { color: #718096 !important; }
+.dark .text-slate-400 { color: #4a5568 !important; }
+.dark .hover\:bg-slate-100:hover { background-color: #2d3748 !important; }
+.dark .hover\:bg-slate-50:hover { background-color: #1e2330 !important; }
+.dark .divide-slate-100 > * + * { border-color: #2d3748 !important; }

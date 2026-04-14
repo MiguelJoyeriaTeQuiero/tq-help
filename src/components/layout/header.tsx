@@ -1,12 +1,13 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { BellIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { BellIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { useTheme } from "@/components/theme-provider";
 
 interface HeaderProps {
   title?: string;
@@ -24,6 +25,7 @@ interface Notification {
 
 export function Header({ title, onMenuClick }: HeaderProps) {
   const { data: session } = useSession();
+  const { theme, toggle } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -61,10 +63,26 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, [dropdownOpen]);
 
+  // Auto-mark all as read after 2 seconds when dropdown is open
+  useEffect(() => {
+    if (!dropdownOpen || last8.length === 0) return;
+    const timer = setTimeout(() => {
+      fetch("/api/notifications", { method: "PATCH" }).then(() => fetchNotifications());
+    }, 2000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropdownOpen]);
+
   const handleMarkAllRead = async () => {
     setMarkingRead(true);
     await fetch("/api/notifications", { method: "PATCH" }).catch(() => {});
     setMarkingRead(false);
+    fetchNotifications();
+  };
+
+  const handleNotificationClick = async (notifId: string) => {
+    setDropdownOpen(false);
+    await fetch(`/api/notifications/${notifId}`, { method: "PATCH" }).catch(() => {});
     fetchNotifications();
   };
 
@@ -85,6 +103,25 @@ export function Header({ title, onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
+        {/* Nombre usuario — solo visible en desktop */}
+        {session?.user && (
+          <span className="hidden md:block text-sm text-slate-500 truncate max-w-[160px]">
+            {session.user.name}
+          </span>
+        )}
+
+        {/* Dark mode toggle */}
+        <button
+          onClick={toggle}
+          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          aria-label="Cambiar tema"
+        >
+          {theme === "dark"
+            ? <SunIcon className="h-5 w-5" />
+            : <MoonIcon className="h-5 w-5" />
+          }
+        </button>
+
         {/* Notificaciones */}
         <div className="relative" ref={dropdownRef}>
           <button
@@ -141,7 +178,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
                       {n.link ? (
                         <Link
                           href={n.link}
-                          onClick={() => setDropdownOpen(false)}
+                          onClick={() => handleNotificationClick(n.id)}
                           className="block hover:opacity-80 transition-opacity"
                         >
                           <p className="font-medium text-slate-800 truncate">{n.title}</p>
@@ -151,13 +188,13 @@ export function Header({ title, onMenuClick }: HeaderProps) {
                           </p>
                         </Link>
                       ) : (
-                        <>
+                        <div onClick={() => handleNotificationClick(n.id)} className="cursor-pointer">
                           <p className="font-medium text-slate-800 truncate">{n.title}</p>
                           <p className="text-slate-600 mt-0.5 line-clamp-2">{n.message}</p>
                           <p className="text-xs text-slate-400 mt-1">
                             {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
                           </p>
-                        </>
+                        </div>
                       )}
                     </div>
                   ))
@@ -177,13 +214,6 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             </div>
           )}
         </div>
-
-        {/* Nombre usuario — solo visible en desktop */}
-        {session?.user && (
-          <span className="hidden md:block text-sm text-slate-500 truncate max-w-[160px]">
-            {session.user.name}
-          </span>
-        )}
       </div>
     </header>
   );
