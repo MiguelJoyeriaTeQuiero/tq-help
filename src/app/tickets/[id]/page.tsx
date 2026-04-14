@@ -17,6 +17,15 @@ import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowPathIcon, LockClosedIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 
+function renderWithMentions(text: string) {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    part.startsWith("@")
+      ? <span key={i} className="text-indigo-600 font-medium">{part}</span>
+      : part
+  );
+}
+
 const STATUS_OPTIONS = [
   { value: "ABIERTO", label: "Abierto" },
   { value: "EN_PROGRESO", label: "En progreso" },
@@ -180,7 +189,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                           {format(new Date(c.createdAt), "dd/MM HH:mm")}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{c.content}</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{renderWithMentions(c.content)}</p>
                     </div>
                   ))}
                 </div>
@@ -194,6 +203,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                       onChange={(e) => setComment(e.target.value)}
                       className="min-h-[80px]"
                     />
+                    <p className="text-xs text-slate-400">Usa @nombre para mencionar a alguien</p>
                     {isAdminForTicket && (
                       <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                         <input type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />

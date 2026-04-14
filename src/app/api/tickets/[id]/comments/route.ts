@@ -62,5 +62,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     ).catch(() => {});
   }
 
+  // Parse @mentions: find all @word in content
+  const mentions = parsed.data.content.match(/@(\w+)/g)?.map((m) => m.slice(1)) ?? [];
+  for (const mention of mentions) {
+    const mentionedUser = await prisma.user.findFirst({
+      where: { name: { contains: mention, mode: "insensitive" } },
+    });
+    if (mentionedUser && mentionedUser.id !== session.user.id) {
+      await prisma.notification.create({
+        data: {
+          userId: mentionedUser.id,
+          title: "Te han mencionado",
+          message: `${session.user.name} te mencionó en una incidencia`,
+          link: `/tickets/${id}`,
+        },
+      });
+    }
+  }
+
   return NextResponse.json(comment, { status: 201 });
 }

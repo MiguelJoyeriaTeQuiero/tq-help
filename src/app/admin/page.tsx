@@ -7,7 +7,7 @@ import { FeatureStatusBadge } from "@/components/features/feature-status-badge";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { DEPARTMENT_LABELS } from "@/lib/utils";
-import { HandThumbUpIcon, TicketIcon, ClockIcon, FlagIcon } from "@heroicons/react/24/outline";
+import { HandThumbUpIcon, TicketIcon, ClockIcon, FlagIcon, ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 export default function AdminPage() {
@@ -25,7 +25,7 @@ export default function AdminPage() {
   return (
     <AppLayout title="Panel de administración">
       <div className="space-y-6">
-        {/* KPIs */}
+        {/* KPIs — row 1 */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <Card className="p-4">
             <div className="flex items-center gap-3">
@@ -62,6 +62,28 @@ export default function AdminPage() {
                   {metrics.complaintsByCategory?.reduce((a: number, c: any) => a + c._count.id, 0) ?? 0}
                 </p>
                 <p className="text-xs text-slate-500">Denuncias totales</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* KPIs — row 2 */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-red-50 p-2"><ExclamationTriangleIcon className="h-5 w-5 text-red-600" /></div>
+              <div>
+                <p className="text-2xl font-bold text-red-600">{metrics.slaBreaches ?? 0}</p>
+                <p className="text-xs text-slate-500">SLA incumplidos</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-blue-50 p-2"><ArrowPathIcon className="h-5 w-5 text-blue-600" /></div>
+              <div>
+                <p className="text-2xl font-bold text-blue-600">{metrics.inProgressTickets ?? 0}</p>
+                <p className="text-xs text-slate-500">Tickets en progreso</p>
               </div>
             </div>
           </Card>
@@ -148,6 +170,39 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Tickets urgentes */}
+        {(() => {
+          const urgentTickets = metrics.recentActivity?.filter(
+            (t: any) =>
+              (t.priority === "CRITICA" || t.priority === "ALTA") &&
+              t.status === "ABIERTO"
+          ) ?? [];
+          if (urgentTickets.length === 0) return null;
+          return (
+            <Card className="border-red-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-700">
+                  <ExclamationTriangleIcon className="h-5 w-5" />
+                  Tickets urgentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {urgentTickets.map((t: any) => (
+                    <li key={t.id} className="flex items-center gap-3 text-sm">
+                      <PriorityBadge priority={t.priority} />
+                      <Link href={`/tickets/${t.id}`} className="flex-1 truncate text-slate-700 hover:text-indigo-600">
+                        {t.title}
+                      </Link>
+                      <TicketStatusBadge status={t.status} />
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Enlace a gestión de denuncias */}
         <Card className="p-4 bg-red-50 border-red-200">

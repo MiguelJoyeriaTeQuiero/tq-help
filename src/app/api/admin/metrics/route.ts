@@ -69,6 +69,19 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
+  // SLA breaches and in-progress count
+  const [slaBreaches, inProgressTickets] = await Promise.all([
+    prisma.ticket.count({
+      where: {
+        slaDueAt: { lt: new Date() },
+        status: { notIn: ["RESUELTO", "CERRADO"] },
+      },
+    }),
+    prisma.ticket.count({
+      where: { status: "EN_PROGRESO" },
+    }),
+  ]);
+
   // Calcular tiempo medio de resolución manualmente
   const resolvedTickets = await prisma.ticket.findMany({
     where: {
@@ -95,5 +108,7 @@ export async function GET(req: NextRequest) {
     avgResolutionHours,
     complaintsByCategory,
     recentActivity,
+    slaBreaches,
+    inProgressTickets,
   });
 }
