@@ -1,18 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeatureStatusBadge } from "@/components/features/feature-status-badge";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { DEPARTMENT_LABELS } from "@/lib/utils";
-import { HandThumbUpIcon, TicketIcon, ClockIcon, FlagIcon, ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { HandThumbUpIcon, TicketIcon, ClockIcon, FlagIcon, ExclamationTriangleIcon, ArrowPathIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
+function getDefaultDates() {
+  const to = new Date();
+  const from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  return {
+    from: from.toISOString().split("T")[0],
+    to: to.toISOString().split("T")[0],
+  };
+}
+
 export default function AdminPage() {
+  const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === "SUPERADMIN";
+
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const defaults = getDefaultDates();
+  const [fromDate, setFromDate] = useState(defaults.from);
+  const [toDate, setToDate] = useState(defaults.to);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/metrics")
@@ -20,11 +37,76 @@ export default function AdminPage() {
       .then((d) => { setMetrics(d); setLoading(false); });
   }, []);
 
+  async function handleDownloadPdf() {
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/admin/report?from=${fromDate}&to=${toDate}`);
+      if (!res.ok) throw new Error("Error generando informe");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tq-help-informe-${fromDate}-${toDate}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("No se pudo generar el informe PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   if (loading) return <AppLayout title="Panel de administración"><div className="text-center py-12 text-slate-400">Cargando métricas...</div></AppLayout>;
 
   return (
     <AppLayout title="Panel de administración">
       <div className="space-y-6">
+
+        {/* PDF Export — solo SUPERADMIN */}
+        {isSuperAdmin && (
+          <Card className="p-4 border-indigo-200 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-800">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-1">Exportar informe PDF</p>
+                <p className="text-xs text-indigo-600 dark:text-indigo-400">Genera un informe con los KPIs del periodo seleccionado</p>
+              </div>
+              <div className="flex flex-wrap items-end gap-3 sm:ml-auto">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-indigo-800 dark:text-indigo-300">Desde</label>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    max={toDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-indigo-800 dark:text-indigo-300">Hasta</label>
+                  <input
+                    type="date"
+                    value={toDate}
+                    min={fromDate}
+                    max={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                </div>
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={downloading}
+                  className="flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 text-sm font-semibold text-white transition-colors shadow-sm"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  {downloading ? "Generando…" : "Descargar Informe PDF"}
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* KPIs — row 1 */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <Card className="p-4">
