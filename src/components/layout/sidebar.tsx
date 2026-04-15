@@ -36,6 +36,7 @@ const navItems = [
   { href: "/admin/plantillas",     label: "Plantillas",         icon: DocumentDuplicateIcon,   roles: ["SUPERADMIN", "DEPT_ADMIN"] },
   { href: "/admin/recurrentes",    label: "Tickets recurrentes",icon: ArrowPathIcon,           roles: ["SUPERADMIN", "DEPT_ADMIN"] },
   { href: "/admin/reglas",         label: "Reglas de negocio",  icon: BoltIcon,                roles: ["SUPERADMIN"] },
+  { href: "/admin/analytics",      label: "Analytics",          icon: ChartBarIcon,            roles: ["SUPERADMIN", "DEPT_ADMIN", "VIEWER"] },
   { href: "/admin/estado",         label: "Estado del sistema", icon: SignalIcon,              roles: ["SUPERADMIN"] },
   { href: "/admin/faq",            label: "Gestión FAQ",        icon: QuestionMarkCircleIcon,  roles: ["SUPERADMIN", "DEPT_ADMIN"] },
   { href: "/admin/widget",         label: "Widget embebible",   icon: CursorArrowRaysIcon,     roles: ["SUPERADMIN"] },

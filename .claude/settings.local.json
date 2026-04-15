@@ -24,7 +24,12 @@
       "Bash(xargs head:*)",
       "Bash(npm run:*)",
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies['@react-pdf/renderer']\\)\")",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(ls C:/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/tickets/[id]/)",
+      "Bash(ls C:/Users/itjoy/Desarrollo/TQ-HELP/src/app/tickets/[id]/)",
+      "Bash(dir \"C:\\\\Users\\\\itjoy\\\\Desarrollo\\\\TQ-HELP\\\\src\\\\app\\\\api\" /b)",
+      "Bash(ls /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/tickets/[id])",
+      "Bash(npm ls:*)"
     ]
   }
 }

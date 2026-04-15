@@ -400,9 +400,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                   <p className="text-sm font-semibold text-slate-700 mb-2">Valoración del servicio</p>
                   {csat ? (
                     <div className="space-y-1">
-                      <StarRating value={csat.score} readonly size="sm" />
+                      <StarRating value={csat.rating} readonly size="sm" />
                       <p className="text-xs text-slate-400">
-                        {["", "Muy insatisfecho", "Insatisfecho", "Neutral", "Satisfecho", "Muy satisfecho"][csat.score]}
+                        {["", "Muy insatisfecho", "Insatisfecho", "Neutral", "Satisfecho", "Muy satisfecho"][csat.rating]}
                       </p>
                       {csat.comment && <p className="text-xs text-slate-500 italic">"{csat.comment}"</p>}
                     </div>

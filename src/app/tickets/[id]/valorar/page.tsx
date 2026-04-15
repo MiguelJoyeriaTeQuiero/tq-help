@@ -12,7 +12,7 @@ export default function ValorarPage({ params }: { params: Promise<{ id: string }
   const router = useRouter();
   const [ticket, setTicket] = useState<any>(null);
   const [existing, setExisting] = useState<any>(null);
-  const [score, setScore] = useState(0);
+  const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -32,13 +32,13 @@ export default function ValorarPage({ params }: { params: Promise<{ id: string }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (score === 0) { setError("Selecciona una valoración"); return; }
+    if (rating === 0) { setError("Selecciona una valoración"); return; }
     setSubmitting(true);
     setError("");
     const res = await fetch(`/api/tickets/${id}/csat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ score, comment }),
+      body: JSON.stringify({ rating, comment }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -76,9 +76,9 @@ export default function ValorarPage({ params }: { params: Promise<{ id: string }
           {existing && !success && (
             <div className="rounded-xl bg-indigo-50 border border-indigo-200 px-5 py-4 text-center space-y-3">
               <p className="text-sm font-medium text-indigo-800">Ya has valorado esta incidencia</p>
-              <StarRating value={existing.score} readonly size="lg" />
+              <StarRating value={existing.rating} readonly size="lg" />
               <p className="text-xs text-indigo-600">
-                {["", "Muy insatisfecho", "Insatisfecho", "Neutral", "Satisfecho", "Muy satisfecho"][existing.score]}
+                {["", "Muy insatisfecho", "Insatisfecho", "Neutral", "Satisfecho", "Muy satisfecho"][existing.rating]}
               </p>
               {existing.comment && (
                 <p className="text-sm text-indigo-700 italic">"{existing.comment}"</p>
@@ -96,7 +96,7 @@ export default function ValorarPage({ params }: { params: Promise<{ id: string }
               </div>
               <p className="text-base font-semibold text-green-800">¡Gracias por tu valoración!</p>
               <p className="text-sm text-green-600">Tu opinión nos ayuda a mejorar el servicio.</p>
-              <StarRating value={score} readonly size="lg" />
+              <StarRating value={rating} readonly size="lg" />
               <button
                 onClick={() => router.push(`/tickets/${id}`)}
                 className="mt-2 text-sm text-green-700 hover:text-green-900 font-medium underline"
@@ -120,11 +120,11 @@ export default function ValorarPage({ params }: { params: Promise<{ id: string }
                   <div className="text-center">
                     <p className="text-sm text-slate-600 mb-3">¿Cómo valorarías la atención recibida?</p>
                     <div className="flex justify-center">
-                      <StarRating value={score} onChange={setScore} size="lg" />
+                      <StarRating value={rating} onChange={setRating} size="lg" />
                     </div>
-                    {score > 0 && (
+                    {rating > 0 && (
                       <p className="text-xs text-slate-500 mt-1.5">
-                        {["", "Muy insatisfecho", "Insatisfecho", "Neutral", "Satisfecho", "Muy satisfecho"][score]}
+                        {["", "Muy insatisfecho", "Insatisfecho", "Neutral", "Satisfecho", "Muy satisfecho"][rating]}
                       </p>
                     )}
                   </div>
@@ -148,7 +148,7 @@ export default function ValorarPage({ params }: { params: Promise<{ id: string }
 
                   <button
                     type="submit"
-                    disabled={submitting || score === 0}
+                    disabled={submitting || rating === 0}
                     className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors"
                   >
                     {submitting ? "Enviando..." : "Enviar valoración"}
