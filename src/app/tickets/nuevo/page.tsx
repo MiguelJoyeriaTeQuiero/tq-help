@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -33,10 +33,24 @@ export default function NuevoTicketPage() {
   const [description, setDescription]   = useState("");
   const [priority, setPriority]         = useState("MEDIA");
   const [targetDept, setTargetDept]     = useState<string[]>([]);
+  const [tagIds, setTagIds]             = useState<string[]>([]);
+  const [tags, setTags]                 = useState<{ value: string; label: string; color?: string }[]>([]);
   const [requiresApproval, setReqApp]   = useState(false);
   const [attachments, setAttachments]   = useState<any[]>([]);
   const [errors, setErrors]             = useState<Record<string, string>>({});
   const [loading, setLoading]           = useState(false);
+
+  // Load available tags
+  useEffect(() => {
+    fetch("/api/tags")
+      .then((r) => r.json())
+      .then((data: any[]) => {
+        if (Array.isArray(data)) {
+          setTags(data.map((t) => ({ value: t.id, label: t.name, color: t.color })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleTemplate = (t: any) => {
     setTitle(t.titlePreset);
@@ -62,7 +76,7 @@ export default function NuevoTicketPage() {
     const res = await fetch("/api/tickets", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ title, description, priority, targetDept, requiresApproval }),
+      body:    JSON.stringify({ title, description, priority, targetDept, tagIds, requiresApproval }),
     });
 
     if (!res.ok) {
@@ -139,6 +153,45 @@ export default function NuevoTicketPage() {
                   error={errors.targetDept}
                 />
               </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-slate-700 mb-2">Etiquetas (opcional)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => {
+                      const selected = tagIds.includes(tag.value);
+                      return (
+                        <button
+                          key={tag.value}
+                          type="button"
+                          onClick={() =>
+                            setTagIds((prev) =>
+                              selected ? prev.filter((id) => id !== tag.value) : [...prev, tag.value]
+                            )
+                          }
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-all ${
+                            selected
+                              ? "border-transparent text-white shadow-sm"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                          }`}
+                          style={selected ? { backgroundColor: tag.color ?? "#6366f1" } : {}}
+                        >
+                          {selected && (
+                            <span className="text-white/80">✓</span>
+                          )}
+                          <span
+                            className={`h-2 w-2 rounded-full flex-shrink-0 ${selected ? "hidden" : ""}`}
+                            style={{ backgroundColor: tag.color ?? "#6366f1" }}
+                          />
+                          {tag.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <p className="text-sm font-medium text-slate-700 mb-2">Adjuntos (opcional)</p>
                 <FileUpload onUpload={setAttachments} />
