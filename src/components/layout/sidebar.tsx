@@ -16,17 +16,23 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
   ComputerDesktopIcon,
+  DocumentDuplicateIcon,
+  ArrowPathIcon,
+  BoltIcon,
 } from "@heroicons/react/24/outline";
 
 const navItems = [
-  { href: "/tickets",            label: "Incidencias",        icon: TicketIcon,            roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
-  { href: "/peticiones",         label: "Peticiones",         icon: LightBulbIcon,          roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
-  { href: "/roadmap",            label: "Roadmap",            icon: MapIcon,                roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
-  { href: "/activos",            label: "Activos (ITAM)",     icon: ComputerDesktopIcon,    roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
-  { href: "/denuncias/consultar",label: "Canal de denuncias", icon: ShieldExclamationIcon,  roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
-  { href: "/admin",              label: "Panel admin",        icon: ChartBarIcon,           roles: ["SUPERADMIN", "DEPT_ADMIN", "VIEWER"], exact: true },
-  { href: "/admin/usuarios",     label: "Usuarios",           icon: UsersIcon,              roles: ["SUPERADMIN"] },
-  { href: "/admin/configuracion",label: "Configuración",      icon: Cog6ToothIcon,          roles: ["SUPERADMIN"] },
+  { href: "/tickets",              label: "Incidencias",        icon: TicketIcon,             roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
+  { href: "/peticiones",           label: "Peticiones",         icon: LightBulbIcon,           roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
+  { href: "/roadmap",              label: "Roadmap",            icon: MapIcon,                 roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
+  { href: "/activos",              label: "Activos (ITAM)",     icon: ComputerDesktopIcon,     roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
+  { href: "/denuncias/consultar",  label: "Canal de denuncias", icon: ShieldExclamationIcon,   roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
+  { href: "/admin",                label: "Panel admin",        icon: ChartBarIcon,            roles: ["SUPERADMIN", "DEPT_ADMIN", "VIEWER"], exact: true },
+  { href: "/admin/usuarios",       label: "Usuarios",           icon: UsersIcon,               roles: ["SUPERADMIN"] },
+  { href: "/admin/plantillas",     label: "Plantillas",         icon: DocumentDuplicateIcon,   roles: ["SUPERADMIN", "DEPT_ADMIN"] },
+  { href: "/admin/recurrentes",    label: "Tickets recurrentes",icon: ArrowPathIcon,           roles: ["SUPERADMIN", "DEPT_ADMIN"] },
+  { href: "/admin/reglas",         label: "Reglas de negocio",  icon: BoltIcon,                roles: ["SUPERADMIN"] },
+  { href: "/admin/configuracion",  label: "Configuración",      icon: Cog6ToothIcon,           roles: ["SUPERADMIN"] },
 ];
 
 interface SidebarProps {

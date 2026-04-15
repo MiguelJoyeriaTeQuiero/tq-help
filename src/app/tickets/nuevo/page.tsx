@@ -12,6 +12,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDepartments } from "@/hooks/use-departments";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { TemplatePicker } from "@/components/tickets/template-picker";
 
 const PRIORITY_OPTIONS = [
   { value: "BAJA", label: "Baja — 5 días laborables" },
@@ -29,9 +30,17 @@ export default function NuevoTicketPage() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("MEDIA");
   const [targetDept, setTargetDept] = useState<string[]>([]);
+  const [requiresApproval, setRequiresApproval] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  const handleTemplate = (t: any) => {
+    setTitle(t.titlePreset);
+    setDescription(t.bodyPreset);
+    setPriority(t.priority);
+    if (t.targetDept?.length > 0) setTargetDept(t.targetDept);
+  };
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -50,7 +59,7 @@ export default function NuevoTicketPage() {
     const res = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, priority, targetDept }),
+      body: JSON.stringify({ title, description, priority, targetDept, requiresApproval }),
     });
 
     if (!res.ok) {
@@ -62,19 +71,13 @@ export default function NuevoTicketPage() {
 
     const ticket = await res.json();
 
-    // Guardar adjuntos si hay
     if (attachments.length > 0) {
       await Promise.all(
         attachments.map((a) =>
           fetch(`/api/tickets/${ticket.id}/attachments`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              filename: a.filename,
-              storageKey: a.storageKey,
-              mimeType: a.mimeType,
-              size: a.size,
-            }),
+            body: JSON.stringify({ filename: a.filename, storageKey: a.storageKey, mimeType: a.mimeType, size: a.size }),
           })
         )
       );
@@ -88,7 +91,10 @@ export default function NuevoTicketPage() {
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Crear nueva incidencia</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Crear nueva incidencia</CardTitle>
+              <TemplatePicker onSelect={handleTemplate} />
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -127,6 +133,15 @@ export default function NuevoTicketPage() {
                 <p className="text-sm font-medium text-slate-700 mb-2">Adjuntos (opcional)</p>
                 <FileUpload onUpload={setAttachments} />
               </div>
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={requiresApproval}
+                  onChange={(e) => setRequiresApproval(e.target.checked)}
+                  className="rounded border-slate-300 text-indigo-600"
+                />
+                Requiere aprobación antes de procesarse
+              </label>
               {errors.general && (
                 <p className="text-sm text-red-600">{errors.general}</p>
               )}

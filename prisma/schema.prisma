@@ -62,6 +62,26 @@ enum AttachmentType {
   DOCUMENT
 }
 
+enum ApprovalStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+enum RecurringFrequency {
+  DIARIA
+  SEMANAL
+  QUINCENAL
+  MENSUAL
+}
+
+enum TicketRelationType {
+  RELACIONADO
+  DUPLICADO
+  BLOQUEADO_POR
+  BLOQUEA
+}
+
 enum AssetType {
   LAPTOP
   DESKTOP
@@ -109,6 +129,12 @@ model User {
   accounts           Account[]
   assignedAssets     Asset[]            @relation("AssetAssignee")
   createdAssets      Asset[]            @relation("AssetCreator")
+  createdTemplates   TicketTemplate[]   @relation("TemplateCreator")
+  approvalReviews    TicketApproval[]   @relation("ApprovalReviewer")
+  recurringCreated   RecurringTicket[]  @relation("RecurringCreator")
+  recurringAssigned  RecurringTicket[]  @relation("RecurringAssignee")
+  businessRules      BusinessRule[]     @relation("RuleCreator")
+  ticketRelations    TicketRelation[]   @relation("RelationCreator")
 
   @@map("users")
 }
@@ -301,12 +327,22 @@ model Ticket {
   updatedAt     DateTime        @updatedAt
   resolvedAt    DateTime?
 
-  comments      Comment[]
-  tags          TicketTag[]
-  attachments   Attachment[]
-  statusHistory TicketStatusHistory[]
-  convertedTo   FeatureRequest? @relation("TicketToFeature")
-  assets        TicketAsset[]
+  comments         Comment[]
+  tags             TicketTag[]
+  attachments      Attachment[]
+  statusHistory    TicketStatusHistory[]
+  convertedTo      FeatureRequest?  @relation("TicketToFeature")
+  assets           TicketAsset[]
+  approval         TicketApproval?
+  requiresApproval Boolean          @default(false)
+  approvalStatus   ApprovalStatus?
+  recurringSourceId String?
+  recurringSource  RecurringTicket? @relation("RecurringSource", fields: [recurringSourceId], references: [id])
+  mergedIntoId     String?
+  mergedInto       Ticket?          @relation("MergedInto", fields: [mergedIntoId], references: [id])
+  mergedTickets    Ticket[]         @relation("MergedInto")
+  relationsFrom    TicketRelation[] @relation("RelationSource")
+  relationsTo      TicketRelation[] @relation("RelationTarget")
 
   @@map("tickets")
 }
@@ -476,4 +512,93 @@ model TicketAsset {
 
   @@id([ticketId, assetId])
   @@map("ticket_assets")
+}
+
+// ─────────────────────────────────────────
+// MÓDULO 5 — FLUJOS DE TRABAJO AVANZADOS
+// ─────────────────────────────────────────
+
+model TicketTemplate {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  titlePreset String
+  bodyPreset  String
+  priority    TicketPriority @default(MEDIA)
+  targetDept  String[]
+  isActive    Boolean        @default(true)
+  createdById String
+  createdBy   User           @relation("TemplateCreator", fields: [createdById], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("ticket_templates")
+}
+
+model TicketApproval {
+  id          String         @id @default(cuid())
+  ticketId    String         @unique
+  ticket      Ticket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  requestedAt DateTime       @default(now())
+  reviewedAt  DateTime?
+  status      ApprovalStatus @default(PENDIENTE)
+  approverId  String?
+  approver    User?          @relation("ApprovalReviewer", fields: [approverId], references: [id])
+  comment     String?
+
+  @@map("ticket_approvals")
+}
+
+model RecurringTicket {
+  id            String             @id @default(cuid())
+  name          String
+  titleTemplate String
+  bodyTemplate  String
+  priority      TicketPriority     @default(MEDIA)
+  targetDept    String[]
+  frequency     RecurringFrequency
+  nextRunAt     DateTime
+  lastRunAt     DateTime?
+  isActive      Boolean            @default(true)
+  assigneeId    String?
+  assignee      User?              @relation("RecurringAssignee", fields: [assigneeId], references: [id])
+  createdById   String
+  createdBy     User               @relation("RecurringCreator", fields: [createdById], references: [id])
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  generatedTickets Ticket[]        @relation("RecurringSource")
+
+  @@map("recurring_tickets")
+}
+
+model BusinessRule {
+  id          String   @id @default(cuid())
+  name        String
+  isActive    Boolean  @default(true)
+  event       String   // "TICKET_CREATED" | "TICKET_UPDATED"
+  conditions  Json     // [{field, operator, value}]
+  action      Json     // {type, value}
+  order       Int      @default(0)
+  createdById String
+  createdBy   User     @relation("RuleCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("business_rules")
+}
+
+model TicketRelation {
+  id           String             @id @default(cuid())
+  sourceId     String
+  source       Ticket             @relation("RelationSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId     String
+  target       Ticket             @relation("RelationTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  relationType TicketRelationType
+  createdById  String
+  createdBy    User               @relation("RelationCreator", fields: [createdById], references: [id])
+  createdAt    DateTime           @default(now())
+
+  @@unique([sourceId, targetId, relationType])
+  @@map("ticket_relations")
 }

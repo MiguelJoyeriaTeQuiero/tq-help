@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/recurring-tickets",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}

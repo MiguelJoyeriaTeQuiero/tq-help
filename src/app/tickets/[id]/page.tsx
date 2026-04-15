@@ -18,7 +18,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowPathIcon, LockClosedIcon, PaperClipIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { TicketAssetsPanel } from "@/components/assets/ticket-assets-panel";
+import { ApprovalBanner } from "@/components/tickets/approval-banner";
+import { TicketRelationsPanel } from "@/components/tickets/ticket-relations-panel";
+import { MergeTicketModal } from "@/components/tickets/merge-ticket-modal";
 
 function renderWithMentions(text: string) {
   const parts = text.split(/(@\w+)/g);
@@ -190,6 +194,26 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
             ))}
           </div>
         </div>
+
+        {/* Approval Banner */}
+        {ticket.approvalStatus && (
+          <ApprovalBanner
+            ticketId={id}
+            approvalStatus={ticket.approvalStatus}
+            approval={ticket.approval}
+            onUpdated={load}
+          />
+        )}
+
+        {/* Merged into banner */}
+        {ticket.mergedIntoId && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 flex items-center gap-2 text-sm text-slate-600">
+            <span>🔀 Este ticket fue fusionado en:</span>
+            <Link href={`/tickets/${ticket.mergedIntoId}`} className="font-medium text-indigo-600 hover:underline">
+              {ticket.mergedInto?.title}
+            </Link>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* Columna principal */}
@@ -370,6 +394,13 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               </CardContent>
             </Card>
 
+            {/* Tickets relacionados */}
+            <Card>
+              <CardContent className="pt-5">
+                <TicketRelationsPanel ticketId={id} />
+              </CardContent>
+            </Card>
+
             {/* Panel de gestión para admins */}
             {isAdminForTicket && (
               <Card>
@@ -421,6 +452,11 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                     <p className="text-xs text-slate-500">
                       Convertido en petición: <a href={`/peticiones/${ticket.convertedTo.id}`} className="text-indigo-600 hover:underline">{ticket.convertedTo.title}</a>
                     </p>
+                  )}
+                  {!ticket.mergedIntoId && (
+                    <div className="pt-1 border-t border-slate-100">
+                      <MergeTicketModal masterId={id} masterTitle={ticket.title} onMerged={load} />
+                    </div>
                   )}
                 </CardContent>
               </Card>

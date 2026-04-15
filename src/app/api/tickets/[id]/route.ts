@@ -5,6 +5,7 @@ import { sendTicketUpdateEmail } from "@/lib/mail";
 import { TICKET_STATUS_LABELS } from "@/lib/utils";
 import { isSlaBreached } from "@/lib/sla";
 import { canManageTickets } from "@/lib/permissions";
+import { evaluateRules } from "@/lib/rules-engine";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -27,6 +28,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       tags: { include: { tag: true } },
       attachments: true,
       statusHistory: { orderBy: { changedAt: "asc" } },
+      approval: { include: { approver: { select: { id: true, name: true } } } },
+      mergedInto: { select: { id: true, title: true } },
+      mergedTickets: { select: { id: true, title: true, status: true } },
+      relationsFrom: {
+        include: { target: { select: { id: true, title: true, status: true, priority: true } } },
+      },
+      relationsTo: {
+        include: { source: { select: { id: true, title: true, status: true, priority: true } } },
+      },
+      recurringSource: { select: { id: true, name: true } },
       comments: {
         where:
           session.user.role === "EMPLOYEE"
@@ -38,12 +49,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         },
         orderBy: { createdAt: "asc" },
       },
+      convertedTo: { select: { id: true, title: true } },
     },
   });
 
   if (!ticket) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  // Empleado solo puede ver sus propios tickets
   if (session.user.role === "EMPLOYEE" && ticket.authorId !== session.user.id) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
@@ -71,12 +82,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { status, priority, assigneeId, tagIds } = parsed.data;
+
+  // Block status transitions when approval is pending
+  if (status && status !== "ABIERTO" && ticket.approvalStatus === "PENDIENTE") {
+    return NextResponse.json(
+      { error: "Este ticket está pendiente de aprobación. Apruébalo antes de cambiar el estado." },
+      { status: 409 }
+    );
+  }
+
   const updates: any = {};
 
   if (status) {
     updates.status = status;
     if (status === "RESUELTO") updates.resolvedAt = new Date();
-    // Registrar historial
     await prisma.ticketStatusHistory.create({
       data: { ticketId: id, fromStatus: ticket.status, toStatus: status as any },
     });
@@ -84,12 +103,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (priority) updates.priority = priority;
   if (assigneeId !== undefined) updates.assigneeId = assigneeId;
 
-  // Actualizar SLA breach
   if (ticket.slaDeadline) {
     updates.slaBreached = isSlaBreached(ticket.slaDeadline);
   }
 
-  // Actualizar tags si se proporcionan
   if (tagIds !== undefined) {
     await prisma.ticketTag.deleteMany({ where: { ticketId: id } });
     if (tagIds.length > 0) {
@@ -98,6 +115,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       });
     }
   }
+
+  // Evaluate business rules on update
+  const rules = await prisma.businessRule.findMany({ where: { isActive: true } });
+  const mutation = evaluateRules("TICKET_UPDATED", {
+    ...ticket,
+    priority: priority ?? ticket.priority,
+    assigneeId: assigneeId !== undefined ? assigneeId : ticket.assigneeId,
+  }, rules);
+
+  if (mutation.assigneeId) updates.assigneeId = mutation.assigneeId;
+  if (mutation.priority) updates.priority = mutation.priority;
+  if (mutation.targetDept) updates.targetDept = mutation.targetDept;
 
   const updated = await prisma.ticket.update({
     where: { id },
@@ -108,7 +137,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     },
   });
 
-  // Notificar al autor si cambió el estado
+  // Apply rule tag mutations
+  if (mutation.tagIds?.length) {
+    await prisma.ticketTag.createMany({
+      data: mutation.tagIds.map((tagId) => ({ ticketId: id, tagId })),
+      skipDuplicates: true,
+    });
+  }
+
   if (status && status !== ticket.status) {
     await sendTicketUpdateEmail(
       updated.author.email,
@@ -118,7 +154,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       TICKET_STATUS_LABELS[updated.status]
     ).catch(() => {});
 
-    // Crear notificación interna
     await prisma.notification.create({
       data: {
         userId: updated.author.id,
