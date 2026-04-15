@@ -58,6 +58,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [newPriority, setNewPriority] = useState("");
   const [updatingPriority, setUpdatingPriority] = useState(false);
+  const [newAssigneeId, setNewAssigneeId] = useState("");
+  const [updatingAssignee, setUpdatingAssignee] = useState(false);
+  const [agents, setAgents] = useState<{ value: string; label: string }[]>([]);
   const [lightbox, setLightbox] = useState<{ images: { url: string; filename: string }[]; index: number } | null>(null);
   const [csat, setCsat] = useState<any>(null);
 
@@ -68,6 +71,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     setTicket(data);
     setNewStatus(data.status);
     setNewPriority(data.priority);
+    setNewAssigneeId(data.assigneeId ?? "");
     setLoading(false);
     // Load CSAT if ticket is closed/resolved
     if (["CERRADO", "RESUELTO"].includes(data.status)) {
@@ -76,6 +80,21 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   };
 
   useEffect(() => { load(); }, [id]);
+
+  // Load agents (admins) for assignment
+  useEffect(() => {
+    fetch("/api/users/agents")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: any[]) => {
+        if (Array.isArray(data)) {
+          setAgents([
+            { value: "", label: "Sin asignar" },
+            ...data.map((u) => ({ value: u.id, label: u.name })),
+          ]);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleStatusUpdate = async () => {
     if (newStatus === ticket.status) return;
@@ -98,6 +117,17 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       body: JSON.stringify({ priority: newPriority }),
     });
     setUpdatingPriority(false);
+    load();
+  };
+
+  const handleAssigneeUpdate = async () => {
+    setUpdatingAssignee(true);
+    await fetch(`/api/tickets/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assigneeId: newAssigneeId || null }),
+    });
+    setUpdatingAssignee(false);
     load();
   };
 
@@ -420,6 +450,30 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                       <ArrowPathIcon className="mr-1 h-4 w-4" />
                       Actualizar prioridad
                     </Button>
+                  </div>
+                  <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+                    <Select
+                      label="Agente asignado"
+                      options={agents}
+                      value={newAssigneeId}
+                      onChange={(e) => setNewAssigneeId(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleAssigneeUpdate}
+                      loading={updatingAssignee}
+                      disabled={newAssigneeId === (ticket.assigneeId ?? "")}
+                      className="w-full"
+                    >
+                      <ArrowPathIcon className="mr-1 h-4 w-4" />
+                      Asignar agente
+                    </Button>
+                    {ticket.assignee && (
+                      <p className="text-xs text-slate-500">
+                        Asignado a: <span className="font-medium text-slate-700">{ticket.assignee.name}</span>
+                      </p>
+                    )}
                   </div>
                   {!ticket.convertedTo && (
                     <Button size="sm" variant="outline" className="w-full" onClick={handleConvert}>
