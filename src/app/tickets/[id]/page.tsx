@@ -14,6 +14,7 @@ import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { FileUpload } from "@/components/ui/file-upload";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { getDeptLabel, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowPathIcon, LockClosedIcon, PaperClipIcon } from "@heroicons/react/24/outline";
@@ -34,6 +35,13 @@ const STATUS_OPTIONS = [
   { value: "CERRADO", label: "Cerrado" },
 ];
 
+const PRIORITY_OPTIONS = [
+  { value: "BAJA", label: "Baja" },
+  { value: "MEDIA", label: "Media" },
+  { value: "ALTA", label: "Alta" },
+  { value: "CRITICA", label: "Crítica" },
+];
+
 export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: session } = useSession();
@@ -45,6 +53,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const [sendingComment, setSendingComment] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [newPriority, setNewPriority] = useState("");
+  const [updatingPriority, setUpdatingPriority] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: { url: string; filename: string }[]; index: number } | null>(null);
 
   const load = async () => {
@@ -53,6 +63,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     const data = await res.json();
     setTicket(data);
     setNewStatus(data.status);
+    setNewPriority(data.priority);
     setLoading(false);
   };
 
@@ -67,6 +78,18 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       body: JSON.stringify({ status: newStatus }),
     });
     setUpdatingStatus(false);
+    load();
+  };
+
+  const handlePriorityUpdate = async () => {
+    if (newPriority === ticket.priority) return;
+    setUpdatingPriority(true);
+    await fetch(`/api/tickets/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priority: newPriority }),
+    });
+    setUpdatingPriority(false);
     load();
   };
 
@@ -102,7 +125,44 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
        (session.user.role === "DEPT_ADMIN" && ticket.targetDept.includes(session.user.department)))
     : false;
 
-  if (loading) return <AppLayout title="Cargando..."><div className="text-center py-12 text-slate-400">Cargando...</div></AppLayout>;
+  if (loading) return (
+    <AppLayout title="Cargando...">
+      <div className="max-w-4xl mx-auto space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-72" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-6 w-16 rounded-full" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-4/6" />
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+              <Skeleton className="h-5 w-36" />
+              {[1,2].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
+  );
   if (!ticket) return null;
 
   const slaOk = ticket.slaDeadline && new Date(ticket.slaDeadline) > new Date();
@@ -139,7 +199,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                 <p className="text-sm text-slate-700 whitespace-pre-wrap">{ticket.description}</p>
                 {ticket.attachments?.length > 0 && (() => {
                   const images = ticket.attachments.filter((a: any) => a.mimeType?.startsWith("image/"));
-                  const others = ticket.attachments.filter((a: any) => !a.mimeType?.startsWith("image/"));
+                  const videos = ticket.attachments.filter((a: any) => a.mimeType?.startsWith("video/"));
+                  const docs = ticket.attachments.filter((a: any) => !a.mimeType?.startsWith("image/") && !a.mimeType?.startsWith("video/"));
                   const lightboxImages = images.map((a: any) => ({ url: a.storageKey, filename: a.filename }));
                   return (
                     <div className="mt-4 space-y-3">
@@ -165,10 +226,32 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                           ))}
                         </div>
                       )}
-                      {/* Otros archivos */}
-                      {others.length > 0 && (
+                      {/* Videos */}
+                      {videos.length > 0 && (
+                        <div className="space-y-2">
+                          {videos.map((a: any) => (
+                            <div key={a.id} className="rounded-lg overflow-hidden border border-slate-200 bg-black">
+                              <video
+                                controls
+                                preload="metadata"
+                                className="w-full max-h-80"
+                                src={a.storageKey}
+                              >
+                                <source src={a.storageKey} type={a.mimeType} />
+                                <a href={a.storageKey} target="_blank" rel="noopener noreferrer"
+                                  className="text-indigo-400 underline p-2 block">
+                                  Descargar vídeo: {a.filename}
+                                </a>
+                              </video>
+                              <p className="text-xs text-slate-400 px-2 py-1 bg-slate-900/60 truncate">{a.filename}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Documentos */}
+                      {docs.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                          {others.map((a: any) => (
+                          {docs.map((a: any) => (
                             <a key={a.id} href={a.storageKey} target="_blank" rel="noopener noreferrer"
                               className="flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors">
                               <PaperClipIcon className="h-4 w-4 flex-shrink-0" />
@@ -284,22 +367,43 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               <Card>
                 <CardHeader><CardTitle>Gestión</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  <Select
-                    label="Cambiar estado"
-                    options={STATUS_OPTIONS}
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleStatusUpdate}
-                    loading={updatingStatus}
-                    disabled={newStatus === ticket.status}
-                    className="w-full"
-                  >
-                    <ArrowPathIcon className="mr-1 h-4 w-4" />
-                    Actualizar estado
-                  </Button>
+                  <div className="space-y-2">
+                    <Select
+                      label="Cambiar estado"
+                      options={STATUS_OPTIONS}
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleStatusUpdate}
+                      loading={updatingStatus}
+                      disabled={newStatus === ticket.status}
+                      className="w-full"
+                    >
+                      <ArrowPathIcon className="mr-1 h-4 w-4" />
+                      Actualizar estado
+                    </Button>
+                  </div>
+                  <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+                    <Select
+                      label="Cambiar prioridad"
+                      options={PRIORITY_OPTIONS}
+                      value={newPriority}
+                      onChange={(e) => setNewPriority(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handlePriorityUpdate}
+                      loading={updatingPriority}
+                      disabled={newPriority === ticket.priority}
+                      className="w-full"
+                    >
+                      <ArrowPathIcon className="mr-1 h-4 w-4" />
+                      Actualizar prioridad
+                    </Button>
+                  </div>
                   {!ticket.convertedTo && (
                     <Button size="sm" variant="outline" className="w-full" onClick={handleConvert}>
                       Convertir en petición
