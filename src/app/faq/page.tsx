@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 300; // 5 minutes
+export const dynamic = "force-dynamic";
 
 export default async function FaqPage() {
   const items = await prisma.faqItem.findMany({
