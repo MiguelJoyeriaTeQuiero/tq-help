@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";
 import { BellIcon } from "@heroicons/react/24/outline";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NotificacionesPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -36,7 +37,21 @@ export default function NotificacionesPage() {
           </Button>
         </div>
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Cargando...</div>
+          <div className="space-y-2">
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex items-start gap-3">
+                <Skeleton className="h-9 w-9 rounded-full flex-shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <div className="flex justify-between gap-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-12 text-slate-400">
             <BellIcon className="mx-auto h-10 w-10 mb-2" />

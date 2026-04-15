@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos los estados" },
@@ -74,7 +75,23 @@ export default function AdminDenunciasPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Cargando...</div>
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex items-center gap-4 px-4 py-4">
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex gap-2">
+                      <Skeleton className="h-5 w-24 rounded-full" />
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                    <Skeleton className="h-3 w-64" />
+                  </div>
+                  <Skeleton className="h-5 w-28 rounded-full" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              ))}
+            </div>
+          </div>
         ) : complaints.length === 0 ? (
           <div className="text-center py-12 text-slate-400">No hay denuncias</div>
         ) : (

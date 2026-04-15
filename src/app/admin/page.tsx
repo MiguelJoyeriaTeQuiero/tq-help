@@ -9,6 +9,7 @@ import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { getDeptLabel } from "@/lib/utils";
 import { HandThumbUpIcon, TicketIcon, ClockIcon, FlagIcon, ExclamationTriangleIcon, ArrowPathIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
 function getDefaultDates() {
@@ -58,7 +59,53 @@ export default function AdminPage() {
     }
   }
 
-  if (loading) return <AppLayout title="Panel de administración"><div className="text-center py-12 text-slate-400">Cargando métricas...</div></AppLayout>;
+  if (loading) return (
+    <AppLayout title="Panel de administración">
+      <div className="space-y-6">
+        {/* KPI cards skeleton */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-9 w-9 rounded-lg flex-shrink-0" />
+                <div className="space-y-1.5 flex-1">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {[1,2].map(i => (
+            <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-9 w-9 rounded-lg flex-shrink-0" />
+                <div className="space-y-1.5 flex-1">
+                  <Skeleton className="h-7 w-12" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Content cards skeleton */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 space-y-3">
+              <Skeleton className="h-5 w-44" />
+              {[1,2,3,4].map(j => (
+                <div key={j} className="flex justify-between">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-4 w-8" />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </AppLayout>
+  );
 
   return (
     <AppLayout title="Panel de administración">

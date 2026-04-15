@@ -15,6 +15,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { HandThumbUpIcon, LockClosedIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { HandThumbUpIcon as HandThumbUpSolid } from "@heroicons/react/24/solid";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS_OPTIONS = [
   { value: "PENDIENTE", label: "Pendiente" },
@@ -87,7 +88,44 @@ export default function PeticionDetailPage({ params }: { params: Promise<{ id: s
        (session.user.role === "DEPT_ADMIN" && session.user.department === feature.targetDept))
     : false;
 
-  if (loading) return <AppLayout title="Cargando..."><div className="text-center py-12 text-slate-400">Cargando...</div></AppLayout>;
+  if (loading) return (
+    <AppLayout title="Cargando...">
+      <div className="max-w-4xl mx-auto space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-80" />
+            <Skeleton className="h-4 w-52" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-6 w-24 rounded-full" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-4/6" />
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+              <Skeleton className="h-5 w-36" />
+              {[1,2].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
+  );
   if (!feature) return null;
 
   return (

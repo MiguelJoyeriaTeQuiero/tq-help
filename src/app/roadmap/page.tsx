@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { getDeptLabel } from "@/lib/utils";
 import { HandThumbUpIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const COLUMNS = [
   { status: "PENDIENTE", label: "Pendiente", color: "border-yellow-400" },
@@ -32,7 +33,23 @@ export default function RoadmapPage() {
   return (
     <AppLayout title="Roadmap">
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Cargando...</div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="rounded-xl border-t-4 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+              <Skeleton className="h-5 w-28" />
+              {[1,2,3].map(j => (
+                <div key={j} className="rounded-lg border border-slate-100 dark:border-slate-700 p-3 space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <div className="flex gap-2 pt-1">
+                    <Skeleton className="h-3 w-12 rounded-full" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {COLUMNS.map((col) => (

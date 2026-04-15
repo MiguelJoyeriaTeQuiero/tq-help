@@ -2,6 +2,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
 @theme {
   /* Brand primary overrides indigo */
   --color-indigo-50: #e6f4fd;

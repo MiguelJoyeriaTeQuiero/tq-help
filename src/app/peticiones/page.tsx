@@ -13,6 +13,7 @@ import { getDeptLabel } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
+import { Skeleton } from "@/components/ui/skeleton";
 import { HandThumbUpIcon as HandThumbUpSolid } from "@heroicons/react/24/solid";
 
 const STATUS_OPTIONS = [
@@ -83,7 +84,25 @@ export default function PeticionesPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Cargando...</div>
+          <div className="space-y-3">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-start gap-4">
+                <div className="flex flex-col items-center gap-2 min-w-[48px]">
+                  <Skeleton className="h-7 w-7 rounded-full" />
+                  <Skeleton className="h-4 w-6" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-5 w-56" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : features.length === 0 ? (
           <div className="text-center py-12 text-slate-400">No hay peticiones</div>
         ) : (

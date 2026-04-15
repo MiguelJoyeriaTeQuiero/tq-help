@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { ROLE_LABELS } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDepartments } from "@/hooks/use-departments";
 import { PlusIcon, KeyIcon, ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/outline";
 
@@ -130,7 +131,24 @@ export default function UsuariosPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Cargando...</div>
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3">
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                  <div className="flex gap-2 ml-auto">
+                    <Skeleton className="h-8 w-20 rounded-lg" />
+                    <Skeleton className="h-8 w-20 rounded-lg" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <Card>
             <div className="overflow-x-auto">
