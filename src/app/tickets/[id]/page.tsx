@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowPathIcon, LockClosedIcon, PaperClipIcon } from "@heroicons/react/24/outline";
+import { TicketAssetsPanel } from "@/components/assets/ticket-assets-panel";
 
 function renderWithMentions(text: string) {
   const parts = text.split(/(@\w+)/g);
@@ -359,6 +360,13 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Activos vinculados */}
+            <Card>
+              <CardContent className="pt-5">
+                <TicketAssetsPanel ticketId={id} />
               </CardContent>
             </Card>
 

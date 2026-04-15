@@ -62,6 +62,26 @@ enum AttachmentType {
   DOCUMENT
 }
 
+enum AssetType {
+  LAPTOP
+  DESKTOP
+  MONITOR
+  PHONE
+  TABLET
+  PRINTER
+  NETWORK_DEVICE
+  SOFTWARE_LICENSE
+  PERIPHERAL
+  OTHER
+}
+
+enum AssetStatus {
+  EN_STOCK
+  ASIGNADO
+  EN_REPARACION
+  DADO_DE_BAJA
+}
+
 // ─────────────────────────────────────────
 // USUARIOS
 // ─────────────────────────────────────────
@@ -87,6 +107,8 @@ model User {
   complaintAuditLogs ComplaintAuditLog[]
   sessions           Session[]
   accounts           Account[]
+  assignedAssets     Asset[]            @relation("AssetAssignee")
+  createdAssets      Asset[]            @relation("AssetCreator")
 
   @@map("users")
 }
@@ -284,6 +306,7 @@ model Ticket {
   attachments   Attachment[]
   statusHistory TicketStatusHistory[]
   convertedTo   FeatureRequest? @relation("TicketToFeature")
+  assets        TicketAsset[]
 
   @@map("tickets")
 }
@@ -411,4 +434,46 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@map("notifications")
+}
+
+// ─────────────────────────────────────────
+// MÓDULO 4 — GESTIÓN DE ACTIVOS (ITAM)
+// ─────────────────────────────────────────
+
+model Asset {
+  id           String      @id @default(cuid())
+  name         String
+  type         AssetType
+  status       AssetStatus @default(EN_STOCK)
+  brand        String?
+  model        String?
+  serialNumber String?     @unique
+  purchaseDate DateTime?
+  warrantyEnd  DateTime?
+  supplier     String?
+  cost         Decimal?    @db.Decimal(10, 2)
+  notes        String?
+  assignedToId String?
+  assignedTo   User?       @relation("AssetAssignee", fields: [assignedToId], references: [id])
+  assignedAt   DateTime?
+  createdById  String
+  createdBy    User        @relation("AssetCreator", fields: [createdById], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  ticketAssets TicketAsset[]
+
+  @@map("assets")
+}
+
+model TicketAsset {
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  assetId    String
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  linkedAt   DateTime @default(now())
+  linkedById String
+
+  @@id([ticketId, assetId])
+  @@map("ticket_assets")
 }
