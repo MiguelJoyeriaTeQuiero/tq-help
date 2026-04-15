@@ -139,7 +139,7 @@ export default function AssetDetailPage() {
   if (loading) {
     return (
       <AppLayout title="Activo">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-4">
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
               <Skeleton className="h-7 w-56" />
@@ -172,7 +172,7 @@ export default function AssetDetailPage() {
 
   return (
     <AppLayout title={asset.name}>
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>

@@ -137,7 +137,7 @@ export default function RecurrentesPage() {
 
   return (
     <AppLayout title="Tickets recurrentes">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex justify-between items-center">
           <p className="text-sm text-slate-500">
             Los tickets se crean automáticamente según la frecuencia configurada.

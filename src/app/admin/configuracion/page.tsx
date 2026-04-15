@@ -54,7 +54,7 @@ export default function ConfiguracionPage() {
 
   return (
     <AppLayout title="Configuración">
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         <DepartmentsSection />
         <TagsSection />
         <SlaSection />

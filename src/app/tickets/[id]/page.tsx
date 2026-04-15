@@ -151,7 +151,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
 
   if (loading) return (
     <AppLayout title="Cargando...">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <Skeleton className="h-6 w-72" />
@@ -162,8 +162,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
             <Skeleton className="h-6 w-20 rounded-full" />
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="lg:col-span-2 xl:col-span-3 space-y-4">
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-4 w-full" />
@@ -193,7 +193,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
 
   return (
     <AppLayout title="Detalle de incidencia">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Cabecera */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -234,9 +234,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {/* Columna principal */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 xl:col-span-3 space-y-4">
             <Card>
               <CardHeader><CardTitle>Descripción</CardTitle></CardHeader>
               <CardContent>

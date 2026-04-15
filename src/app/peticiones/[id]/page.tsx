@@ -90,7 +90,7 @@ export default function PeticionDetailPage({ params }: { params: Promise<{ id: s
 
   if (loading) return (
     <AppLayout title="Cargando...">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <Skeleton className="h-6 w-80" />
@@ -130,7 +130,7 @@ export default function PeticionDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <AppLayout title="Detalle de petición">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-xl font-semibold text-slate-900">{feature.title}</h1>

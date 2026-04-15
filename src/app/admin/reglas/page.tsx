@@ -220,7 +220,7 @@ export default function ReglasPage() {
 
   return (
     <AppLayout title="Reglas de negocio">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex justify-between items-start">
           <p className="text-sm text-slate-500 max-w-md">
             Las reglas se evalúan automáticamente al crear o actualizar tickets. Las reglas activas se ejecutan en orden de prioridad.

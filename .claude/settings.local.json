@@ -29,7 +29,15 @@
       "Bash(ls C:/Users/itjoy/Desarrollo/TQ-HELP/src/app/tickets/[id]/)",
       "Bash(dir \"C:\\\\Users\\\\itjoy\\\\Desarrollo\\\\TQ-HELP\\\\src\\\\app\\\\api\" /b)",
       "Bash(ls /c/Users/itjoy/Desarrollo/TQ-HELP/src/app/tickets/[id])",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(node -e \"const wp = require\\('web-push'\\); const keys = wp.generateVAPIDKeys\\(\\); console.log\\('VAPID_PUBLIC_KEY=' + keys.publicKey + '\\\\nVAPID_PRIVATE_KEY=' + keys.privateKey\\);\")",
+      "Bash(git push:*)",
+      "Bash(del C:\\\\Users\\\\itjoy\\\\Desarrollo\\\\TQ-HELP\\\\test-push.mjs)",
+      "Bash(node prisma/seed-faq.mjs)",
+      "Bash(curl -s http://localhost:3000/api/tags)",
+      "Bash(node -e ':*)",
+      "Bash(grep -n \"assignee\\\\|asigna\\\\|Asigna\\\\|Assignee\" C:/Users/itjoy/Desarrollo/TQ-HELP/src/app/tickets/[id]/page.tsx)",
+      "Bash(grep -n \"assigneeId\\\\|PATCH\" C:/Users/itjoy/Desarrollo/TQ-HELP/src/app/api/tickets/[id]/route.ts)"
     ]
   }
 }

@@ -72,7 +72,7 @@ export default function AdminDenunciaDetailPage({ params }: { params: Promise<{ 
 
   return (
     <AppLayout title="Detalle de denuncia">
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">

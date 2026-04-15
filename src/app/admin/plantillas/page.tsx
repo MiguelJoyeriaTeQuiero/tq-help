@@ -115,7 +115,7 @@ export default function PlantillasPage() {
 
   return (
     <AppLayout title="Plantillas de ticket">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex justify-end">
           <Button onClick={openCreate}>
             <PlusIcon className="h-4 w-4 mr-1" />Nueva plantilla
