@@ -82,6 +82,13 @@ enum TicketRelationType {
   BLOQUEA
 }
 
+enum ServiceStatusType {
+  OPERATIONAL
+  DEGRADED
+  INCIDENT
+  MAINTENANCE
+}
+
 enum AssetType {
   LAPTOP
   DESKTOP
@@ -135,6 +142,7 @@ model User {
   recurringAssigned  RecurringTicket[]  @relation("RecurringAssignee")
   businessRules      BusinessRule[]     @relation("RuleCreator")
   ticketRelations    TicketRelation[]   @relation("RelationCreator")
+  faqItems           FaqItem[]          @relation("FaqCreator")
 
   @@map("users")
 }
@@ -343,6 +351,7 @@ model Ticket {
   mergedTickets    Ticket[]         @relation("MergedInto")
   relationsFrom    TicketRelation[] @relation("RelationSource")
   relationsTo      TicketRelation[] @relation("RelationTarget")
+  csat             TicketCsat?
 
   @@map("tickets")
 }
@@ -601,4 +610,60 @@ model TicketRelation {
 
   @@unique([sourceId, targetId, relationType])
   @@map("ticket_relations")
+}
+
+// ─────────────────────────────────────────
+// MÓDULO 6 — PORTAL DE AUTOSERVICIO
+// ─────────────────────────────────────────
+
+model ServiceStatus {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  status      ServiceStatusType @default(OPERATIONAL)
+  order       Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  incidents   StatusIncident[]
+
+  @@map("service_statuses")
+}
+
+model StatusIncident {
+  id          String        @id @default(cuid())
+  serviceId   String
+  service     ServiceStatus @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  resolvedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("status_incidents")
+}
+
+model TicketCsat {
+  id        String   @id @default(cuid())
+  ticketId  String   @unique
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@map("ticket_csat")
+}
+
+model FaqItem {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String
+  category    String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdById String
+  createdBy   User     @relation("FaqCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("faq_items")
 }

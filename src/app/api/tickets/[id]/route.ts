@@ -145,6 +145,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   }
 
+  // CSAT notification when ticket is closed
+  if (status === "CERRADO" && status !== ticket.status) {
+    await prisma.notification.create({
+      data: {
+        userId: ticket.authorId,
+        type: "CSAT_REQUEST",
+        title: "¿Cómo valorarías la atención recibida?",
+        message: `Tu incidencia "${ticket.title}" ha sido cerrada. Comparte tu valoración.`,
+        link: `/tickets/${id}/valorar`,
+      },
+    }).catch(() => {});
+  }
+
   if (status && status !== ticket.status) {
     await sendTicketUpdateEmail(
       updated.author.email,

@@ -14,7 +14,13 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/denuncias") ||
     nextUrl.pathname.startsWith("/api/auth") ||
     (nextUrl.pathname.startsWith("/api/complaints") && req.method === "POST") ||
-    nextUrl.pathname.startsWith("/api/complaints/track");
+    nextUrl.pathname.startsWith("/api/complaints/track") ||
+    nextUrl.pathname.startsWith("/status") ||
+    nextUrl.pathname.startsWith("/faq") ||
+    nextUrl.pathname.startsWith("/widget") ||
+    nextUrl.pathname.startsWith("/api/status") ||
+    nextUrl.pathname.startsWith("/api/faq") ||
+    nextUrl.pathname.startsWith("/api/widget");
 
   if (!isLoggedIn && !isPublicPath) {
     return NextResponse.redirect(new URL("/login", nextUrl));

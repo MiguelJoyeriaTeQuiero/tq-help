@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useTheme } from "@/components/theme-provider";
+import { GlobalSearch } from "@/components/search/global-search";
 
 interface HeaderProps {
   title?: string;
@@ -103,6 +104,9 @@ export function Header({ title, onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
+        {/* Búsqueda global */}
+        <GlobalSearch />
+
         {/* Nombre usuario — solo visible en desktop */}
         {session?.user && (
           <span className="hidden md:block text-sm text-slate-500 truncate max-w-[160px]">

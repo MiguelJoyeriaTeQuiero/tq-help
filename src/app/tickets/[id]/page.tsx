@@ -23,6 +23,7 @@ import { TicketAssetsPanel } from "@/components/assets/ticket-assets-panel";
 import { ApprovalBanner } from "@/components/tickets/approval-banner";
 import { TicketRelationsPanel } from "@/components/tickets/ticket-relations-panel";
 import { MergeTicketModal } from "@/components/tickets/merge-ticket-modal";
+import { StarRating } from "@/components/ui/star-rating";
 
 function renderWithMentions(text: string) {
   const parts = text.split(/(@\w+)/g);
@@ -61,6 +62,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const [newPriority, setNewPriority] = useState("");
   const [updatingPriority, setUpdatingPriority] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: { url: string; filename: string }[]; index: number } | null>(null);
+  const [csat, setCsat] = useState<any>(null);
 
   const load = async () => {
     const res = await fetch(`/api/tickets/${id}`);
@@ -70,6 +72,10 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     setNewStatus(data.status);
     setNewPriority(data.priority);
     setLoading(false);
+    // Load CSAT if ticket is closed/resolved
+    if (["CERRADO", "RESUELTO"].includes(data.status)) {
+      fetch(`/api/tickets/${id}/csat`).then((r) => r.ok ? r.json() : null).then(setCsat).catch(() => {});
+    }
   };
 
   useEffect(() => { load(); }, [id]);
@@ -386,6 +392,31 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                 )}
               </CardContent>
             </Card>
+
+            {/* CSAT */}
+            {["CERRADO", "RESUELTO"].includes(ticket.status) && (
+              <Card>
+                <CardContent className="pt-5">
+                  <p className="text-sm font-semibold text-slate-700 mb-2">Valoración del servicio</p>
+                  {csat ? (
+                    <div className="space-y-1">
+                      <StarRating value={csat.score} readonly size="sm" />
+                      <p className="text-xs text-slate-400">
+                        {["", "Muy insatisfecho", "Insatisfecho", "Neutral", "Satisfecho", "Muy satisfecho"][csat.score]}
+                      </p>
+                      {csat.comment && <p className="text-xs text-slate-500 italic">"{csat.comment}"</p>}
+                    </div>
+                  ) : session?.user?.id === ticket.authorId ? (
+                    <Link href={`/tickets/${id}/valorar`} className="inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                      <StarRating value={0} readonly size="sm" />
+                      <span className="ml-1">Valorar atención →</span>
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-slate-400">Sin valoración todavía</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Activos vinculados */}
             <Card>
