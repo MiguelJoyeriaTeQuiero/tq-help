@@ -20,7 +20,8 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/widget") ||
     nextUrl.pathname.startsWith("/api/status") ||
     nextUrl.pathname.startsWith("/api/faq") ||
-    nextUrl.pathname.startsWith("/api/widget");
+    nextUrl.pathname.startsWith("/api/widget") ||
+    nextUrl.pathname.startsWith("/api/chatbot");
 
   if (!isLoggedIn && !isPublicPath) {
     return NextResponse.redirect(new URL("/login", nextUrl));

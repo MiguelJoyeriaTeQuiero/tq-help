@@ -6,6 +6,7 @@ import { TICKET_STATUS_LABELS } from "@/lib/utils";
 import { isSlaBreached } from "@/lib/sla";
 import { canManageTickets } from "@/lib/permissions";
 import { evaluateRules } from "@/lib/rules-engine";
+import { sendPushToUser } from "@/lib/push";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -147,15 +148,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   // CSAT notification when ticket is closed
   if (status === "CERRADO" && status !== ticket.status) {
-    await prisma.notification.create({
-      data: {
-        userId: ticket.authorId,
-        type: "CSAT_REQUEST",
-        title: "¿Cómo valorarías la atención recibida?",
-        message: `Tu incidencia "${ticket.title}" ha sido cerrada. Comparte tu valoración.`,
-        link: `/tickets/${id}/valorar`,
-      },
-    }).catch(() => {});
+    const csatPayload = {
+      userId: ticket.authorId,
+      type: "CSAT_REQUEST",
+      title: "¿Cómo valorarías la atención recibida?",
+      message: `Tu incidencia "${ticket.title}" ha sido cerrada. Comparte tu valoración.`,
+      link: `/tickets/${id}/valorar`,
+    };
+    await prisma.notification.create({ data: csatPayload }).catch(() => {});
+    await sendPushToUser(ticket.authorId, { title: csatPayload.title, body: csatPayload.message, url: csatPayload.link }).catch(() => {});
   }
 
   if (status && status !== ticket.status) {
@@ -167,15 +168,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       TICKET_STATUS_LABELS[updated.status]
     ).catch(() => {});
 
-    await prisma.notification.create({
-      data: {
-        userId: updated.author.id,
-        type: "TICKET_UPDATED",
-        title: "Tu incidencia ha sido actualizada",
-        message: `"${updated.title}" pasó a estado ${TICKET_STATUS_LABELS[updated.status]}`,
-        link: `/tickets/${id}`,
-      },
-    });
+    const updatePayload = {
+      userId: updated.author.id,
+      type: "TICKET_UPDATED",
+      title: "Tu incidencia ha sido actualizada",
+      message: `"${updated.title}" pasó a estado ${TICKET_STATUS_LABELS[updated.status]}`,
+      link: `/tickets/${id}`,
+    };
+    await prisma.notification.create({ data: updatePayload });
+    await sendPushToUser(updated.author.id, { title: updatePayload.title, body: updatePayload.message, url: updatePayload.link }).catch(() => {});
   }
 
   return NextResponse.json(updated);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendTicketUpdateEmail } from "@/lib/mail";
+import { sendPushToUser } from "@/lib/push";
 import { canSeeInternalComments } from "@/lib/permissions";
 import { z } from "zod";
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Sin permisos" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const body   = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
@@ -60,6 +61,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       ticket.status,
       "Se ha añadido una respuesta a tu incidencia."
     ).catch(() => {});
+
+    // Push notification
+    await sendPushToUser(ticket.authorId, {
+      title: `Respuesta en "${ticket.title}"`,
+      body:  `${session.user.name}: ${parsed.data.content.slice(0, 80)}${parsed.data.content.length > 80 ? "…" : ""}`,
+      url:   `/tickets/${id}`,
+    }).catch(() => {});
   }
 
   // Parse @mentions: find all @word in content
@@ -78,6 +86,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           link: `/tickets/${id}`,
         },
       });
+      await sendPushToUser(mentionedUser.id, {
+        title: "Te han mencionado",
+        body:  `${session.user.name} te mencionó en "${ticket.title}"`,
+        url:   `/tickets/${id}`,
+      }).catch(() => {});
     }
   }
 

@@ -9,6 +9,7 @@ import { es } from "date-fns/locale";
 import Link from "next/link";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PushToggle } from "@/components/notifications/push-toggle";
 
 export default function NotificacionesPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -32,9 +33,12 @@ export default function NotificacionesPage() {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-slate-500">{notifications.filter((n) => !n.read).length} sin leer</p>
-          <Button size="sm" variant="outline" onClick={markAllRead}>
-            Marcar todas como leídas
-          </Button>
+          <div className="flex items-center gap-2">
+            <PushToggle />
+            <Button size="sm" variant="outline" onClick={markAllRead}>
+              Marcar todas como leídas
+            </Button>
+          </div>
         </div>
         {loading ? (
           <div className="space-y-2">

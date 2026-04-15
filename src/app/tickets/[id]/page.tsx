@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +16,14 @@ import { getDeptLabel, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from "@/li
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
-import { ArrowPathIcon, LockClosedIcon, PaperClipIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { TicketAssetsPanel } from "@/components/assets/ticket-assets-panel";
 import { ApprovalBanner } from "@/components/tickets/approval-banner";
 import { TicketRelationsPanel } from "@/components/tickets/ticket-relations-panel";
 import { MergeTicketModal } from "@/components/tickets/merge-ticket-modal";
 import { StarRating } from "@/components/ui/star-rating";
+import { LiveComments } from "@/components/tickets/live-comments";
 
 function renderWithMentions(text: string) {
   const parts = text.split(/(@\w+)/g);
@@ -54,9 +54,6 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const router = useRouter();
   const [ticket, setTicket] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [comment, setComment] = useState("");
-  const [isInternal, setIsInternal] = useState(false);
-  const [sendingComment, setSendingComment] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [newPriority, setNewPriority] = useState("");
@@ -101,20 +98,6 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       body: JSON.stringify({ priority: newPriority }),
     });
     setUpdatingPriority(false);
-    load();
-  };
-
-  const handleComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!comment.trim()) return;
-    setSendingComment(true);
-    await fetch(`/api/tickets/${id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: comment, isInternal }),
-    });
-    setComment("");
-    setSendingComment(false);
     load();
   };
 
@@ -319,51 +302,15 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               </Card>
             )}
 
-            {/* Comentarios */}
+            {/* Comentarios en tiempo real */}
             <Card>
-              <CardHeader><CardTitle>Comentarios ({ticket.comments?.length ?? 0})</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Comentarios</CardTitle></CardHeader>
               <CardContent>
-                <div className="space-y-4 mb-6">
-                  {ticket.comments?.map((c: any) => (
-                    <div key={c.id} className={`rounded-lg p-3 ${c.isInternal ? "bg-yellow-50 border border-yellow-200" : "bg-slate-50"}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-slate-800">{c.author.name}</span>
-                        {c.isInternal && (
-                          <span className="flex items-center gap-1 text-xs text-yellow-700">
-                            <LockClosedIcon className="h-3 w-3" /> Interno
-                          </span>
-                        )}
-                        <span className="ml-auto text-xs text-slate-400">
-                          {format(new Date(c.createdAt), "dd/MM HH:mm")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{renderWithMentions(c.content)}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Formulario nuevo comentario */}
-                {(session?.user.role !== "VIEWER") && (
-                  <form onSubmit={handleComment} className="space-y-3">
-                    <Textarea
-                      placeholder="Escribe un comentario..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className="min-h-[80px]"
-                    />
-                    <p className="text-xs text-slate-400">Usa @nombre para mencionar a alguien</p>
-                    {isAdminForTicket && (
-                      <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                        <input type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
-                        <LockClosedIcon className="h-3 w-3" />
-                        Comentario interno (no visible para el usuario)
-                      </label>
-                    )}
-                    <Button type="submit" size="sm" loading={sendingComment}>
-                      Enviar comentario
-                    </Button>
-                  </form>
-                )}
+                <LiveComments
+                  ticketId={id}
+                  isAdmin={isAdminForTicket}
+                  onComment={load}
+                />
               </CardContent>
             </Card>
           </div>

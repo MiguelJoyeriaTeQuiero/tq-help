@@ -13,11 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDepartments } from "@/hooks/use-departments";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { TemplatePicker } from "@/components/tickets/template-picker";
+import { TicketChatbot } from "@/components/chatbot/ticket-chatbot";
 
 const PRIORITY_OPTIONS = [
-  { value: "BAJA", label: "Baja — 5 días laborables" },
-  { value: "MEDIA", label: "Media — 3 días laborables" },
-  { value: "ALTA", label: "Alta — 1 día laborable" },
+  { value: "BAJA",    label: "Baja — 5 días laborables" },
+  { value: "MEDIA",   label: "Media — 3 días laborables" },
+  { value: "ALTA",    label: "Alta — 1 día laborable" },
   { value: "CRITICA", label: "Crítica — 4 horas" },
 ];
 
@@ -26,14 +27,16 @@ export default function NuevoTicketPage() {
   const { data: session } = useSession();
   const { departments } = useDepartments();
   const deptOptions = departments.map((d) => ({ value: d.key, label: d.label }));
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("MEDIA");
-  const [targetDept, setTargetDept] = useState<string[]>([]);
-  const [requiresApproval, setRequiresApproval] = useState(false);
-  const [attachments, setAttachments] = useState<any[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+
+  const [showForm, setShowForm]         = useState(false);
+  const [title, setTitle]               = useState("");
+  const [description, setDescription]   = useState("");
+  const [priority, setPriority]         = useState("MEDIA");
+  const [targetDept, setTargetDept]     = useState<string[]>([]);
+  const [requiresApproval, setReqApp]   = useState(false);
+  const [attachments, setAttachments]   = useState<any[]>([]);
+  const [errors, setErrors]             = useState<Record<string, string>>({});
+  const [loading, setLoading]           = useState(false);
 
   const handleTemplate = (t: any) => {
     setTitle(t.titlePreset);
@@ -44,9 +47,9 @@ export default function NuevoTicketPage() {
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (title.trim().length < 5) errs.title = "El título debe tener al menos 5 caracteres";
+    if (title.trim().length < 5)       errs.title       = "El título debe tener al menos 5 caracteres";
     if (description.trim().length < 10) errs.description = "La descripción debe tener al menos 10 caracteres";
-    if (targetDept.length === 0) errs.targetDept = "Selecciona al menos un departamento destino";
+    if (targetDept.length === 0)        errs.targetDept  = "Selecciona al menos un departamento destino";
     return errs;
   };
 
@@ -57,9 +60,9 @@ export default function NuevoTicketPage() {
 
     setLoading(true);
     const res = await fetch("/api/tickets", {
-      method: "POST",
+      method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, priority, targetDept, requiresApproval }),
+      body:    JSON.stringify({ title, description, priority, targetDept, requiresApproval }),
     });
 
     if (!res.ok) {
@@ -75,9 +78,9 @@ export default function NuevoTicketPage() {
       await Promise.all(
         attachments.map((a) =>
           fetch(`/api/tickets/${ticket.id}/attachments`, {
-            method: "POST",
+            method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ filename: a.filename, storageKey: a.storageKey, mimeType: a.mimeType, size: a.size }),
+            body:    JSON.stringify({ filename: a.filename, storageKey: a.storageKey, mimeType: a.mimeType, size: a.size }),
           })
         )
       );
@@ -89,6 +92,13 @@ export default function NuevoTicketPage() {
   return (
     <AppLayout title="Nueva incidencia">
       <div className="max-w-2xl mx-auto">
+
+        {/* ── Chatbot — shown until user explicitly proceeds ── */}
+        {!showForm && (
+          <TicketChatbot onProceed={() => setShowForm(true)} />
+        )}
+
+        {/* ── Ticket form ── */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -137,7 +147,7 @@ export default function NuevoTicketPage() {
                 <input
                   type="checkbox"
                   checked={requiresApproval}
-                  onChange={(e) => setRequiresApproval(e.target.checked)}
+                  onChange={(e) => setReqApp(e.target.checked)}
                   className="rounded border-slate-300 text-indigo-600"
                 />
                 Requiere aprobación antes de procesarse
