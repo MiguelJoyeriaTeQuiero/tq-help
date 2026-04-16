@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos los estados" },
@@ -42,6 +43,8 @@ export default function AdminDenunciasPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [forbidden, setForbidden] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -70,7 +73,7 @@ export default function AdminDenunciasPage() {
     <AppLayout title="Canal de denuncias — Gestión">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-48" />
+          <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="w-48" />
           <p className="text-sm text-slate-500">{complaints.length} denuncia{complaints.length !== 1 ? "s" : ""}</p>
         </div>
 
@@ -108,7 +111,7 @@ export default function AdminDenunciasPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {complaints.map((c) => (
+                  {complaints.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((c) => (
                     <tr key={c.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3">
                         <Link href={`/admin/denuncias/${c.id}`} className="font-mono text-indigo-600 hover:underline font-medium">
@@ -127,6 +130,9 @@ export default function AdminDenunciasPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="px-4 py-3 border-t border-slate-100">
+              <Pagination page={page} total={complaints.length} pageSize={PAGE_SIZE} onChange={setPage} />
             </div>
           </Card>
         )}

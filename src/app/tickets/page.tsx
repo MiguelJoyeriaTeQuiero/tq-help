@@ -15,6 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos los estados" },
@@ -51,6 +52,8 @@ export default function TicketsPage() {
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
   const [dept, setDept] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,13 +61,15 @@ export default function TicketsPage() {
     if (status) params.set("status", status);
     if (priority) params.set("priority", priority);
     if (dept) params.set("dept", dept);
+    params.set("page", String(page));
+    params.set("limit", String(pageSize));
 
     const res = await fetch(`/api/tickets?${params}`);
     const data = await res.json();
     setTickets(data.tickets ?? []);
     setTotal(data.total ?? 0);
     setLoading(false);
-  }, [status, priority, dept]);
+  }, [status, priority, dept, page]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -77,20 +82,20 @@ export default function TicketsPage() {
             <Select
               options={STATUS_OPTIONS}
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               className="w-44"
             />
             <Select
               options={PRIORITY_OPTIONS}
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              onChange={(e) => { setPriority(e.target.value); setPage(1); }}
               className="w-44"
             />
             {(session?.user.role === "SUPERADMIN" || session?.user.role === "DEPT_ADMIN" || session?.user.role === "VIEWER") && (
               <Select
                 options={DEPT_OPTIONS}
                 value={dept}
-                onChange={(e) => setDept(e.target.value)}
+                onChange={(e) => { setDept(e.target.value); setPage(1); }}
                 className="w-44"
               />
             )}
@@ -185,8 +190,9 @@ export default function TicketsPage() {
                 </Link>
               ))}
               <p className="text-xs text-slate-400 text-center py-1">
-                {total} incidencia{total !== 1 ? "s" : ""}
+                Mostrando {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} de {total} incidencia{total !== 1 ? "s" : ""}
               </p>
+              <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
             </div>
 
             {/* Vista escritorio: tabla */}
@@ -241,8 +247,9 @@ export default function TicketsPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 border-t border-slate-100 text-sm text-slate-500">
-                {total} incidencia{total !== 1 ? "s" : ""}
+              <div className="px-4 py-3 border-t border-slate-100 text-sm text-slate-500 flex items-center justify-between flex-wrap gap-2">
+                <span>Mostrando {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} de {total} incidencia{total !== 1 ? "s" : ""}</span>
+                <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
               </div>
             </Card>
           </>

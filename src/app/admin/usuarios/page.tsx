@@ -13,6 +13,7 @@ import { ROLE_LABELS } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDepartments } from "@/hooks/use-departments";
 import { PlusIcon, KeyIcon, ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { Pagination } from "@/components/ui/pagination";
 
 const ROLE_OPTIONS = [
   { value: "EMPLOYEE", label: "Empleado" }, { value: "DEPT_ADMIN", label: "Admin de departamento" },
@@ -40,6 +41,8 @@ export default function UsuariosPage() {
   const deptOptions = departments.map((d) => ({ value: d.key, label: d.label }));
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   // Modal crear usuario
   const [createOpen, setCreateOpen] = useState(false);
@@ -163,7 +166,7 @@ export default function UsuariosPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {users.map((u) => (
+                  {users.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3">
                         <p className="font-medium text-slate-900">{u.name}</p>
@@ -210,6 +213,9 @@ export default function UsuariosPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="px-4 py-3 border-t border-slate-100">
+              <Pagination page={page} total={users.length} pageSize={PAGE_SIZE} onChange={setPage} />
             </div>
           </Card>
         )}

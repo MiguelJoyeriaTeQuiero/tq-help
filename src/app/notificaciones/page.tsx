@@ -10,10 +10,13 @@ import Link from "next/link";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PushToggle } from "@/components/notifications/push-toggle";
+import { Pagination } from "@/components/ui/pagination";
 
 export default function NotificacionesPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const load = () => {
     fetch("/api/notifications")
@@ -62,26 +65,32 @@ export default function NotificacionesPage() {
             No hay notificaciones
           </div>
         ) : (
-          <div className="space-y-2">
-            {notifications.map((n) => (
-              <Card key={n.id} className={`p-4 ${!n.read ? "border-indigo-200 bg-indigo-50" : ""}`}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                    <p className="text-sm text-slate-600 mt-0.5">{n.message}</p>
-                    {n.link && (
-                      <Link href={n.link} className="text-xs text-indigo-600 hover:underline mt-1 block">
-                        Ver detalle →
-                      </Link>
-                    )}
+          <>
+            <div className="space-y-2">
+              {notifications.slice((page - 1) * pageSize, page * pageSize).map((n) => (
+                <Card key={n.id} className={`p-4 ${!n.read ? "border-indigo-200 bg-indigo-50" : ""}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900">{n.title}</p>
+                      <p className="text-sm text-slate-600 mt-0.5">{n.message}</p>
+                      {n.link && (
+                        <Link href={n.link} className="text-xs text-indigo-600 hover:underline mt-1 block">
+                          Ver detalle →
+                        </Link>
+                      )}
+                    </div>
+                    <span className="text-xs text-slate-400 whitespace-nowrap">
+                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-400 whitespace-nowrap">
-                    {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
-                  </span>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+            <p className="text-sm text-slate-400 text-center pt-1">
+              Mostrando {notifications.length === 0 ? 0 : Math.min((page - 1) * pageSize + 1, notifications.length)}–{Math.min(page * pageSize, notifications.length)} de {notifications.length} notificacion{notifications.length !== 1 ? "es" : ""}
+            </p>
+            <Pagination page={page} total={notifications.length} pageSize={pageSize} onChange={setPage} />
+          </>
         )}
       </div>
     </AppLayout>

@@ -16,6 +16,7 @@ import { FREQUENCY_OPTIONS, FREQUENCY_LABELS } from "@/lib/recurring";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusIcon, PencilIcon, TrashIcon, PlayIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { Pagination } from "@/components/ui/pagination";
 
 const PRIORITY_OPTIONS = [
   { value: "BAJA", label: "Baja" },
@@ -43,6 +44,8 @@ export default function RecurrentesPage() {
   const [users, setUsers] = useState<any[]>([]);
 
   const [items, setItems] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -154,7 +157,7 @@ export default function RecurrentesPage() {
         ) : (
           <Card>
             <div className="divide-y divide-slate-100">
-              {items.map((item) => (
+              {items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((item) => (
                 <div key={item.id} className={`flex items-start gap-4 px-4 py-4 ${!item.isActive ? "opacity-50" : ""}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -202,6 +205,7 @@ export default function RecurrentesPage() {
                 </div>
               ))}
             </div>
+            <Pagination page={page} total={items.length} pageSize={PAGE_SIZE} onChange={setPage} />
           </Card>
         )}
       </div>

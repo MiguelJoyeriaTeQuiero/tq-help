@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useDepartments } from "@/hooks/use-departments";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { Pagination } from "@/components/ui/pagination";
 
 const PRIORITY_OPTIONS = [
   { value: "BAJA", label: "Baja" },
@@ -36,6 +37,8 @@ export default function PlantillasPage() {
   const deptOptions = departments.map((d) => ({ value: d.key, label: d.label }));
 
   const [templates, setTemplates] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -134,7 +137,7 @@ export default function PlantillasPage() {
         ) : (
           <Card>
             <div className="divide-y divide-slate-100">
-              {templates.map((t) => (
+              {templates.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((t) => (
                 <div key={t.id} className={`flex items-start gap-4 px-4 py-4 ${!t.isActive ? "opacity-50" : ""}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -168,6 +171,7 @@ export default function PlantillasPage() {
                 </div>
               ))}
             </div>
+            <Pagination page={page} total={templates.length} pageSize={PAGE_SIZE} onChange={setPage} />
           </Card>
         )}
       </div>

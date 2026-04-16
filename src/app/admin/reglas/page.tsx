@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, PencilIcon, TrashIcon, BoltIcon } from "@heroicons/react/24/outline";
+import { Pagination } from "@/components/ui/pagination";
 
 // ─── Config de campos/operadores/acciones ────────────────────────────────────
 
@@ -74,6 +75,8 @@ export default function ReglasPage() {
   const { data: session } = useSession();
 
   const [rules, setRules] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -237,7 +240,7 @@ export default function ReglasPage() {
         ) : (
           <Card>
             <div className="divide-y divide-slate-100">
-              {rules.map((rule) => (
+              {rules.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((rule) => (
                 <div key={rule.id} className={`flex items-start gap-4 px-4 py-4 ${!rule.isActive ? "opacity-50" : ""}`}>
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-indigo-50 flex-shrink-0 mt-0.5">
                     <BoltIcon className="h-4 w-4 text-indigo-600" />
@@ -278,6 +281,7 @@ export default function ReglasPage() {
                 </div>
               ))}
             </div>
+            <Pagination page={page} total={rules.length} pageSize={PAGE_SIZE} onChange={setPage} />
           </Card>
         )}
       </div>

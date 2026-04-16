@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 
 interface FaqItem {
   id: string;
@@ -24,6 +25,8 @@ export default function FaqAdminPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const load = async () => {
     const res = await fetch("/api/faq?all=1");
@@ -105,7 +108,7 @@ export default function FaqAdminPage() {
         {/* Search */}
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Buscar por pregunta o categoría..."
           className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
         />
@@ -181,7 +184,7 @@ export default function FaqAdminPage() {
           <div className="text-center py-16 text-slate-400">No hay preguntas{search ? " que coincidan" : " aún"}.</div>
         ) : (
           <div className="space-y-2">
-            {filtered.map((item) => (
+            {filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((item) => (
               <div
                 key={item.id}
                 className={`rounded-xl border ${item.isActive ? "border-slate-200 bg-white" : "border-slate-100 bg-slate-50 opacity-60"} p-4`}
@@ -224,6 +227,7 @@ export default function FaqAdminPage() {
             ))}
           </div>
         )}
+        <Pagination page={page} total={filtered.length} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
     </AppLayout>
   );

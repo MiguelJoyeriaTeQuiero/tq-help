@@ -15,6 +15,7 @@ import { es } from "date-fns/locale";
 import { PlusIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HandThumbUpIcon as HandThumbUpSolid } from "@heroicons/react/24/solid";
+import { Pagination } from "@/components/ui/pagination";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos los estados" },
@@ -44,19 +45,23 @@ export default function PeticionesPage() {
   const [status, setStatus] = useState("");
   const [dept, setDept] = useState("");
   const [voting, setVoting] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (dept) params.set("dept", dept);
+    params.set("page", String(page));
+    params.set("limit", String(pageSize));
 
     const res = await fetch(`/api/features?${params}`);
     const data = await res.json();
     setFeatures(data.features ?? []);
     setTotal(data.total ?? 0);
     setLoading(false);
-  }, [status, dept]);
+  }, [status, dept, page]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -73,8 +78,8 @@ export default function PeticionesPage() {
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-wrap gap-2">
-            <Select options={STATUS_OPTIONS} value={status} onChange={(e) => setStatus(e.target.value)} className="w-44" />
-            <Select options={DEPT_OPTIONS} value={dept} onChange={(e) => setDept(e.target.value)} className="w-44" />
+            <Select options={STATUS_OPTIONS} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-44" />
+            <Select options={DEPT_OPTIONS} value={dept} onChange={(e) => { setDept(e.target.value); setPage(1); }} className="w-44" />
           </div>
           {session?.user.role !== "VIEWER" && (
             <Link href="/peticiones/nueva">
@@ -146,7 +151,10 @@ export default function PeticionesPage() {
             ))}
           </div>
         )}
-        <p className="text-sm text-slate-400">{total} peticion{total !== 1 ? "es" : ""}</p>
+        <p className="text-sm text-slate-400">
+          Mostrando {total === 0 ? 0 : Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} de {total} peticion{total !== 1 ? "es" : ""}
+        </p>
+        <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
       </div>
     </AppLayout>
   );
