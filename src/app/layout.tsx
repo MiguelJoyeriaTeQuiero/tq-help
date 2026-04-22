@@ -3,12 +3,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { UmamiAnalytics } from "@/components/analytics/umami";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TQ-HELP — Gestión interna",
-  description: "Sistema de incidencias, peticiones y canal de denuncias",
+  description: "Sistema de incidencias y peticiones",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>
+        <UmamiAnalytics />
       </body>
     </html>
   );

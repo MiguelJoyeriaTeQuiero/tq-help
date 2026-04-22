@@ -23,18 +23,15 @@ export async function GET(req: NextRequest) {
     resolvedTickets,
     openTickets,
     slaBreaches,
-    totalComplaints,
     ticketsByDept,
     ticketsByPriority,
     topFeatures,
-    complaintsByCategory,
     resolvedForAvg,
   ] = await Promise.all([
     prisma.ticket.count({ where: { createdAt: { gte: from, lte: to } } }),
     prisma.ticket.count({ where: { createdAt: { gte: from, lte: to }, status: { in: ["RESUELTO", "CERRADO"] } } }),
     prisma.ticket.count({ where: { status: { in: ["ABIERTO", "EN_PROGRESO"] } } }),
     prisma.ticket.count({ where: { slaDeadline: { lt: new Date() }, status: { notIn: ["RESUELTO", "CERRADO"] } } }),
-    prisma.complaint.count({ where: { createdAt: { gte: from, lte: to } } }),
     prisma.$queryRaw<any[]>`
       SELECT unnest("targetDept") AS "targetDept", COUNT(*)::int AS count
       FROM tickets
@@ -49,7 +46,6 @@ export async function GET(req: NextRequest) {
       take: 10,
       select: { title: true, voteCount: true, status: true },
     }),
-    prisma.complaint.groupBy({ by: ["category"], _count: { id: true } }),
     prisma.ticket.findMany({
       where: { status: "RESUELTO", resolvedAt: { not: null }, createdAt: { gte: from, lte: to } },
       select: { createdAt: true, resolvedAt: true },
@@ -70,11 +66,9 @@ export async function GET(req: NextRequest) {
     openTickets,
     avgResolutionHours,
     slaBreaches,
-    totalComplaints,
     ticketsByDept,
     ticketsByPriority,
     topFeatures,
-    complaintsByCategory,
     generatedAt: new Date().toISOString(),
   };
 

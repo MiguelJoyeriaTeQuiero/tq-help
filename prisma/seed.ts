@@ -354,30 +354,6 @@ async function main() {
 
   console.log("✅ Peticiones de funcionalidad creadas");
 
-  // ── Denuncia de ejemplo ───────────────────────────────────────────────────
-  const existingComplaint = await prisma.complaint.findUnique({ where: { trackingCode: "ABCD-1234" } });
-  if (!existingComplaint) {
-    const complaint = await prisma.complaint.create({
-      data: {
-        trackingCode: "ABCD-1234",
-        category: "CONFLICTO_INTERESES",
-        description: "He observado que un proveedor de material de oficina con el que tenemos contrato parece tener vínculos familiares con la persona que gestiona las compras en nuestro departamento. Los precios que pagamos parecen superiores a los del mercado.",
-        status: "EN_INVESTIGACION",
-      },
-    });
-    await prisma.complaintStatusHistory.createMany({
-      data: [
-        { complaintId: complaint.id, toStatus: "RECIBIDA" },
-        { complaintId: complaint.id, fromStatus: "RECIBIDA", toStatus: "EN_INVESTIGACION" },
-      ],
-    });
-    await prisma.complaintNote.create({
-      data: { complaintId: complaint.id, content: "Iniciada revisión de contratos de los últimos 2 años con este proveedor." },
-    });
-  }
-
-  console.log("✅ Denuncia de ejemplo creada");
-
   console.log("\n🎉 Seed completado!\n");
   console.log("Usuarios de prueba:");
   console.log("  admin@empresa.com     / Admin123!  (Superadmin)");
@@ -388,7 +364,6 @@ async function main() {
   console.log("  logistica@empresa.com / User123!   (Empleado Logística)");
   console.log("  contabilidad@empresa.com / User123! (Empleado Contabilidad)");
   console.log("  producto@empresa.com  / User123!   (Empleado Producto)");
-  console.log("\nDenuncia de prueba — código: ABCD-1234");
 }
 
 main()

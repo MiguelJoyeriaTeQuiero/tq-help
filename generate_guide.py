@@ -255,9 +255,8 @@ def build():
         p("   2.6 Valorar el servicio", toc_sub),
         p("   2.7 Peticiones y Roadmap", toc_sub),
         p("   2.8 FAQ", toc_sub),
-        p("   2.9 Canal de denuncias", toc_sub),
-        p("   2.10 Notificaciones push", toc_sub),
-        p("   2.11 Buscador global", toc_sub),
+        p("   2.9 Notificaciones push", toc_sub),
+        p("   2.10 Buscador global", toc_sub),
         sp(6),
         p("3. &#128736; Guia para Administradores de Departamento", toc_style),
         p("   3.1 Gestionar incidencias del departamento", toc_sub),
@@ -305,7 +304,6 @@ def build():
         ("&#128161; Peticiones", "Cuando tienes una idea para mejorar algo en la empresa"),
         ("&#128506; Roadmap", "Ver que mejoras estan planeadas y en que estado estan"),
         ("&#10067; FAQ", "Respuestas a las preguntas mas comunes"),
-        ("&#128737;&#65039; Canal de Denuncias", "Para reportar algo grave de forma anonima"),
         ("&#128276; Notificaciones", "Avisos cuando cambia algo de tus incidencias"),
         ("&#128202; Panel Admin", "Solo para admins: estadisticas y gestion"),
         ("&#128421;&#65039; Activos ITAM", "Inventario de equipos (ordenadores, moviles...)"),
@@ -544,32 +542,11 @@ def build():
         tip_box("El chatbot que aparece al crear una incidencia busca automaticamente en la FAQ. Aprovechalo!", "ok"),
         sp(12),
 
-        # 2.9 Canal de denuncias
-        p("2.9  &#128737;&#65039; Canal de denuncias anonimo", section_title),
-        hr(),
-        p("El canal de denuncias es un lugar <b>completamente anonimo</b> donde puedes reportar situaciones graves en la empresa. Por ejemplo:"),
-        b("Acoso laboral o bullying en el trabajo"),
-        b("Fraude o robo"),
-        b("Discriminacion"),
-        b("Conflicto de intereses"),
-        sp(8),
-        tip_box("NADIE puede saber quien envio la denuncia. No se guarda ningun dato tuyo. Es 100% anonimo.", "ok"),
-        sp(6),
-        p("<b>Como funciona:</b>"),
-        b("Ve a la seccion 'Canal de denuncias' en el menu"),
-        b("Elige la categoria y escribe lo que ocurrio con detalle"),
-        b("Haz clic en 'Enviar denuncia de forma anonima'"),
-        b("El sistema te dara un <b>CODIGO DE SEGUIMIENTO</b> (por ejemplo: ABCD-1234)"),
-        sp(6),
-        tip_box("GUARDA ESE CODIGO! Es la unica forma de consultar el estado de tu denuncia despues. Si lo pierdes, no podras hacer seguimiento.", "warn"),
-        sp(6),
-        p("Con el codigo puedes ir a 'Consultar denuncia' y ver en que estado esta tu caso."),
-        sp(12),
     ]
 
     story += [
-        # 2.10 Notificaciones push
-        p("2.10  &#128276; Notificaciones push", section_title),
+        # 2.9 Notificaciones push
+        p("2.9  &#128276; Notificaciones push", section_title),
         hr(),
         p("Las notificaciones push son avisos que te llegan directamente al navegador, como los que te llegan al movil de WhatsApp."),
         sp(6),
@@ -587,8 +564,8 @@ def build():
         tip_box("Las notificaciones funcionan aunque tengas el navegador minimizado. Muy util para no perderte nada importante!", "tip"),
         sp(12),
 
-        # 2.11 Buscador global
-        p("2.11  &#128269; Buscador global (Ctrl+K)", section_title),
+        # 2.10 Buscador global
+        p("2.10  &#128269; Buscador global (Ctrl+K)", section_title),
         hr(),
         p("El buscador global te permite encontrar cualquier cosa en TQ-HELP rapidamente."),
         sp(6),
@@ -925,9 +902,6 @@ def build():
 
         ("El chatbot no entendio mi pregunta. Que hago?",
          "Escribe de forma sencilla y directa. Por ejemplo: 'impresora no imprime' en vez de 'tengo un problema con el dispositivo de impresion'. Si sigue sin funcionar, haz clic en 'Crear incidencia de todas formas'."),
-
-        ("Perdi el codigo de seguimiento de mi denuncia. Que pasa?",
-         "Lamentablemente no hay forma de recuperarlo. El sistema es completamente anonimo y no guarda ningun dato tuyo. Para futuras denuncias, apunta el codigo en un lugar seguro."),
 
         ("Puedo adjuntar archivos a mis incidencias?",
          "Si! Puedes adjuntar imagenes, videos y documentos (maximo 50MB por archivo). Las imagenes se muestran directamente en la incidencia con visor. Los videos se pueden reproducir desde la app."),

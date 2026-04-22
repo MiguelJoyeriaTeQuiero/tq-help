@@ -41,21 +41,6 @@ enum TicketPriority {
   CRITICA
 }
 
-enum ComplaintStatus {
-  RECIBIDA
-  EN_INVESTIGACION
-  RESUELTA
-  ARCHIVADA
-}
-
-enum ComplaintCategory {
-  ACOSO_LABORAL
-  FRAUDE
-  DISCRIMINACION
-  CONFLICTO_INTERESES
-  OTRO
-}
-
 enum AttachmentType {
   IMAGE
   VIDEO
@@ -131,7 +116,6 @@ model User {
   comments           Comment[]
   featureComments    FeatureComment[]
   notifications      Notification[]
-  complaintAuditLogs ComplaintAuditLog[]
   sessions           Session[]
   accounts           Account[]
   assignedAssets     Asset[]            @relation("AssetAssignee")
@@ -421,59 +405,6 @@ model SlaPolicy {
   escalateTo        Role
 
   @@map("sla_policies")
-}
-
-// ─────────────────────────────────────────
-// MÓDULO 3 — CANAL DE DENUNCIAS
-// ─────────────────────────────────────────
-
-model Complaint {
-  id            String            @id @default(cuid())
-  trackingCode  String            @unique
-  category      ComplaintCategory
-  description   String
-  status        ComplaintStatus   @default(RECIBIDA)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  internalNotes ComplaintNote[]
-  statusHistory ComplaintStatusHistory[]
-  auditLogs     ComplaintAuditLog[]
-
-  @@map("complaints")
-}
-
-model ComplaintNote {
-  id          String    @id @default(cuid())
-  content     String
-  complaintId String
-  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-
-  @@map("complaint_notes")
-}
-
-model ComplaintStatusHistory {
-  id          String           @id @default(cuid())
-  complaintId String
-  complaint   Complaint        @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  fromStatus  ComplaintStatus?
-  toStatus    ComplaintStatus
-  changedAt   DateTime         @default(now())
-
-  @@map("complaint_status_history")
-}
-
-model ComplaintAuditLog {
-  id          String    @id @default(cuid())
-  complaintId String
-  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  action      String
-  accessedAt  DateTime  @default(now())
-
-  @@map("complaint_audit_logs")
 }
 
 // ─────────────────────────────────────────

@@ -16,8 +16,6 @@ export async function GET(req: NextRequest) {
     ticketsByDept,
     ticketsByPriority,
     topFeatures,
-    avgResolutionMs,
-    complaintsByCategory,
     recentActivity,
   ] = await Promise.all([
     // Tickets abiertos totales
@@ -45,15 +43,6 @@ export async function GET(req: NextRequest) {
       orderBy: { voteCount: "desc" },
       take: 10,
       select: { id: true, title: true, voteCount: true, status: true, targetDept: true },
-    }),
-
-    // placeholder — calculado manualmente abajo
-    Promise.resolve(null),
-
-    // Denuncias por categoría (sin datos identificativos)
-    prisma.complaint.groupBy({
-      by: ["category"],
-      _count: { id: true },
     }),
 
     // Últimos 5 tickets creados
@@ -108,7 +97,6 @@ export async function GET(req: NextRequest) {
     ticketsByPriority,
     topFeatures,
     avgResolutionHours,
-    complaintsByCategory,
     recentActivity,
     slaBreaches,
     inProgressTickets,

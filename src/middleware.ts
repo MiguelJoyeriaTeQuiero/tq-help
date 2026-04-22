@@ -11,17 +11,16 @@ export default auth((req) => {
 
   const isPublicPath =
     nextUrl.pathname.startsWith("/login") ||
-    nextUrl.pathname.startsWith("/denuncias") ||
     nextUrl.pathname.startsWith("/api/auth") ||
-    (nextUrl.pathname.startsWith("/api/complaints") && req.method === "POST") ||
-    nextUrl.pathname.startsWith("/api/complaints/track") ||
     nextUrl.pathname.startsWith("/status") ||
     nextUrl.pathname.startsWith("/faq") ||
     nextUrl.pathname.startsWith("/widget") ||
     nextUrl.pathname.startsWith("/api/status") ||
     nextUrl.pathname.startsWith("/api/faq") ||
     nextUrl.pathname.startsWith("/api/widget") ||
-    nextUrl.pathname.startsWith("/api/chatbot");
+    nextUrl.pathname.startsWith("/api/chatbot") ||
+    nextUrl.pathname.startsWith("/api/health") ||
+    nextUrl.pathname.startsWith("/monitoring");
 
   if (!isLoggedIn && !isPublicPath) {
     return NextResponse.redirect(new URL("/login", nextUrl));

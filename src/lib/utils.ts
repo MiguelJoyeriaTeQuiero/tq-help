@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { TicketPriority, TicketStatus, FeatureStatus, ComplaintStatus, Role } from "@prisma/client";
+import { TicketPriority, TicketStatus, FeatureStatus, Role } from "@prisma/client";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -58,13 +58,6 @@ export const FEATURE_STATUS_LABELS: Record<FeatureStatus, string> = {
   EN_DESARROLLO: "En desarrollo",
   COMPLETADO: "Completado",
   DESCARTADO: "Descartado",
-};
-
-export const COMPLAINT_STATUS_LABELS: Record<ComplaintStatus, string> = {
-  RECIBIDA: "Recibida",
-  EN_INVESTIGACION: "En investigación",
-  RESUELTA: "Resuelta",
-  ARCHIVADA: "Archivada",
 };
 
 export const PRIORITY_COLORS: Record<TicketPriority, string> = {

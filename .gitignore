@@ -43,3 +43,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# sentry
+.sentryclirc
+.env.sentry-build-plugin

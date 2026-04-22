@@ -11,7 +11,7 @@ import { TicketStatusBadge } from "@/components/tickets/status-badge";
 import { AgentMetricsTable } from "@/components/analytics/agent-metrics-table";
 import { getDeptLabel } from "@/lib/utils";
 import {
-  HandThumbUpIcon, TicketIcon, ClockIcon, FlagIcon,
+  HandThumbUpIcon, TicketIcon, ClockIcon,
   ExclamationTriangleIcon, ArrowPathIcon, DocumentArrowDownIcon,
   TableCellsIcon, CalendarIcon,
 } from "@heroicons/react/24/outline";
@@ -194,10 +194,9 @@ export default function AdminPage() {
                 {[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
               </div>
             ) : metrics && (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-2">
                 <StatKpi icon={<ClockIcon className="h-5 w-5 text-green-600"/>}       bg="bg-green-50"  value={`${metrics.avgResolutionHours}h`} label="T. medio resolución (30d)" />
                 <StatKpi icon={<HandThumbUpIcon className="h-5 w-5 text-indigo-600"/>} bg="bg-indigo-50" value={metrics.topFeatures?.length ?? 0}   label="Peticiones activas" />
-                <StatKpi icon={<FlagIcon className="h-5 w-5 text-red-600"/>}           bg="bg-red-50"    value={metrics.complaintsByCategory?.reduce((a:number,c:any) => a + c._count.id, 0) ?? 0} label="Denuncias totales" />
               </div>
             )}
 
@@ -276,23 +275,6 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
 
-                  {/* Denuncias por categoría */}
-                  <Card>
-                    <CardHeader><CardTitle>Denuncias por categoría</CardTitle></CardHeader>
-                    <CardContent>
-                      {metrics.complaintsByCategory?.length === 0
-                        ? <p className="text-sm text-slate-400">Sin datos</p>
-                        : <ul className="space-y-2">
-                            {metrics.complaintsByCategory?.map((c: any) => (
-                              <li key={c.category} className="flex items-center justify-between text-sm">
-                                <span className="text-slate-600 capitalize">{c.category.toLowerCase().replace(/_/g, " ")}</span>
-                                <span className="font-semibold text-slate-900">{c._count.id}</span>
-                              </li>
-                            ))}
-                          </ul>
-                      }
-                    </CardContent>
-                  </Card>
                 </div>
 
                 {/* Tickets urgentes */}
@@ -321,18 +303,6 @@ export default function AdminPage() {
                   );
                 })()}
 
-                {/* Canal denuncias */}
-                <Card className="p-4 bg-red-50 border-red-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-red-900">Canal de denuncias</p>
-                      <p className="text-sm text-red-700">Acceso restringido a RRHH y Dirección</p>
-                    </div>
-                    <Link href="/admin/denuncias" className="text-sm text-red-700 hover:text-red-900 font-medium underline">
-                      Gestionar denuncias →
-                    </Link>
-                  </div>
-                </Card>
               </>
             )}
           </div>

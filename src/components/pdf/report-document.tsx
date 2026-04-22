@@ -146,11 +146,9 @@ interface ReportData {
   openTickets: number;
   avgResolutionHours: number;
   slaBreaches: number;
-  totalComplaints: number;
   ticketsByDept: { targetDept: string; _count: { id: number } }[];
   ticketsByPriority: { priority: string; _count: { id: number } }[];
   topFeatures: { title: string; voteCount: number; status: string }[];
-  complaintsByCategory: { category: string; _count: { id: number } }[];
   generatedAt: string;
 }
 
@@ -161,11 +159,6 @@ const DEPT_LABELS: Record<string, string> = {
 
 const PRIORITY_LABELS: Record<string, string> = {
   CRITICA: "Crítica", ALTA: "Alta", MEDIA: "Media", BAJA: "Baja",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  ACOSO_LABORAL: "Acoso laboral", FRAUDE: "Fraude",
-  DISCRIMINACION: "Discriminación", CONFLICTO_INTERESES: "Conflicto de intereses", OTRO: "Otro",
 };
 
 const FEATURE_STATUS_LABELS: Record<string, string> = {
@@ -237,11 +230,7 @@ export function ReportDocument({ data }: { data: ReportData }) {
               <Text style={[s.kpiValue, { color: COLORS.red }]}>{data.slaBreaches}</Text>
               <Text style={s.kpiSub}>tickets vencidos</Text>
             </View>
-            <View style={[s.kpiCard, { borderTop: `3 solid ${COLORS.secondary}`, flex: 0.5 }]}>
-              <Text style={s.kpiLabel}>Denuncias totales</Text>
-              <Text style={[s.kpiValue, { color: COLORS.secondary }]}>{data.totalComplaints}</Text>
-              <Text style={s.kpiSub}>canal anónimo</Text>
-            </View>
+            <View style={{ flex: 0.5 }} />
             <View style={{ flex: 1 }} />
             <View style={{ flex: 1 }} />
           </View>
@@ -303,12 +292,12 @@ export function ReportDocument({ data }: { data: ReportData }) {
 
       </Page>
 
-      {/* ── Página 2: Peticiones y Denuncias ── */}
+      {/* ── Página 2: Peticiones ── */}
       <Page size="A4" style={s.page}>
         <View style={s.header}>
           <View style={s.headerLeft}>
             <LogoPdf size={28} />
-            <Text style={[s.headerTitle, { marginTop: 8 }]}>Peticiones y Denuncias</Text>
+            <Text style={[s.headerTitle, { marginTop: 8 }]}>Peticiones</Text>
           </View>
           <View style={s.headerRight}>
             <Text style={s.headerPeriod}>{formatDate(data.from)} — {formatDate(data.to)}</Text>
@@ -339,29 +328,10 @@ export function ReportDocument({ data }: { data: ReportData }) {
             </>
           )}
 
-          {/* ── Denuncias por categoría ── */}
-          {data.complaintsByCategory.length > 0 && (
-            <>
-              <Text style={s.sectionTitle}>Denuncias por categoría</Text>
-              <View style={s.table}>
-                <View style={s.tableHeader}>
-                  <Text style={[s.tableHeaderCell, { flex: 3 }]}>Categoría</Text>
-                  <Text style={s.tableHeaderCell}>Nº denuncias</Text>
-                </View>
-                {data.complaintsByCategory.map((c, i) => (
-                  <View key={i} style={i % 2 === 0 ? s.tableRow : s.tableRowAlt}>
-                    <Text style={[s.tableCellBold, { flex: 3 }]}>{CATEGORY_LABELS[c.category] ?? c.category}</Text>
-                    <Text style={s.tableCell}>{c._count.id}</Text>
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
-
           {/* ── Nota legal ── */}
           <View style={{ marginTop: 30, padding: 14, backgroundColor: COLORS.slate100, borderRadius: 6, borderLeft: `3 solid ${COLORS.accent}` }}>
             <Text style={{ fontSize: 8, color: COLORS.slate500, lineHeight: 1.6 }}>
-              Este informe es confidencial y de uso interno exclusivo. Los datos de denuncias se presentan de forma agregada y anónima conforme a la política de protección de datos. TQ-HELP — {new Date().getFullYear()}.
+              Este informe es confidencial y de uso interno exclusivo. TQ-HELP — {new Date().getFullYear()}.
             </Text>
           </View>
 

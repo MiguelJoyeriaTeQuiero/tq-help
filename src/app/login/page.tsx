@@ -77,14 +77,6 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-        <div className="mt-4 text-center">
-          <a
-            href="/denuncias"
-            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
-          >
-            Canal de denuncias anónimo →
-          </a>
-        </div>
       </div>
     </div>
   );
