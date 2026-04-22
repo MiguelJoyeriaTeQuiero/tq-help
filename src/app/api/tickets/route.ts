@@ -40,7 +40,13 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  if (status) where.status = status;
+  if (status) {
+    if (status.includes(",")) {
+      where.status = { in: status.split(",") };
+    } else {
+      where.status = status;
+    }
+  }
   if (priority) where.priority = priority;
   if (dept) where.targetDept = { has: dept };
   if (approvalPending) where.approvalStatus = "PENDIENTE";
