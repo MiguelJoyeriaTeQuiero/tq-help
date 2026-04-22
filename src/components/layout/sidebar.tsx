@@ -21,6 +21,7 @@ import {
   SignalIcon,
   QuestionMarkCircleIcon,
   CursorArrowRaysIcon,
+  CubeIcon,
 } from "@heroicons/react/24/outline";
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/roadmap",              label: "Roadmap",            icon: MapIcon,                 roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
   { href: "/activos",              label: "Activos (ITAM)",     icon: ComputerDesktopIcon,     roles: ["SUPERADMIN", "DEPT_ADMIN"] },
   { href: "/faq",                  label: "FAQ",                icon: QuestionMarkCircleIcon,  roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
+  { href: "/pedidos-metal",        label: "Pedidos material",   icon: CubeIcon,                roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE"] },
   { href: "/admin",                label: "Panel admin",        icon: ChartBarIcon,            roles: ["SUPERADMIN", "DEPT_ADMIN", "VIEWER"], exact: true },
   { href: "/admin/usuarios",       label: "Usuarios",           icon: UsersIcon,               roles: ["SUPERADMIN"] },
   { href: "/admin/plantillas",     label: "Plantillas",         icon: DocumentDuplicateIcon,   roles: ["SUPERADMIN", "DEPT_ADMIN"] },

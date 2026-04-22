@@ -67,6 +67,56 @@ enum TicketRelationType {
   BLOQUEA
 }
 
+enum MetalFamily {
+  PENDIENTE
+  AROS
+  CADENA
+  CORDON
+  COLLAR
+  ANILLO
+  SELLO
+  SOLITARIO
+  ALIANZA
+  PULSERA
+  ESCLAVA
+  SEMANARIO
+  ATADEDO
+  PLACA_FOTO
+  PLACA_RH
+  PLACA
+  PIERCING
+  COLGANTE
+  MEDALLA
+  GEMELO
+  PASA_CORBATA
+  RELOJ
+  RELOJ_DE_BOLSILLO
+  PROTESIS_DENTAL
+  TOBILLERA
+  LLAVERO
+  BROCHE
+  CADENA_RELOJ_BOLSILLO
+  MONEDA
+  CRUZ
+  MANO
+  CORREA_RELOJ
+  OTRAS
+  LINGOTE
+  EAR_CUFF
+  PACKAGING
+  FORNITURA
+}
+
+enum MetalOrderStatus {
+  BORRADOR
+  ENVIADO
+  CONFIRMADO
+  PREPARANDO
+  EN_CAMINO
+  ENTREGADO
+  CANCELADO
+}
+
 enum ServiceStatusType {
   OPERATIONAL
   DEGRADED
@@ -128,6 +178,7 @@ model User {
   ticketRelations    TicketRelation[]   @relation("RelationCreator")
   faqItems           FaqItem[]          @relation("FaqCreator")
   pushSubscriptions  PushSubscription[]
+  metalOrders        MetalOrder[]       @relation("MetalOrderCreator")
 
   @@map("users")
 }
@@ -610,4 +661,33 @@ model FaqItem {
   updatedAt   DateTime @updatedAt
 
   @@map("faq_items")
+}
+
+// ─────────────────────────────────────────
+// MÓDULO 7 — PEDIDOS DE MATERIAL (METAL)
+// ─────────────────────────────────────────
+
+model MetalOrder {
+  id          String           @id @default(cuid())
+  status      MetalOrderStatus @default(BORRADOR)
+  notes       String?
+  createdById String
+  createdBy   User             @relation("MetalOrderCreator", fields: [createdById], references: [id])
+  department  String
+  items       MetalOrderItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("metal_orders")
+}
+
+model MetalOrderItem {
+  id          String      @id @default(cuid())
+  orderId     String
+  order       MetalOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  family      MetalFamily
+  description String?
+  quantity    Int         @default(1)
+
+  @@map("metal_order_items")
 }
