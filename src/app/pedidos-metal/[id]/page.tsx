@@ -20,6 +20,7 @@ import {
   TruckIcon,
   ArchiveBoxIcon,
   PencilSquareIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import type { MetalFamily, MetalOrderStatus } from "@prisma/client";
 
@@ -77,6 +78,7 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
   const [draftQtys,  setDraftQtys]  = useState<Record<string, number>>({});
   const [saving,     setSaving]     = useState(false);
   const [saveMsg,    setSaveMsg]    = useState("");
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/metal-orders/${id}`)
@@ -96,13 +98,34 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
 
   const cancelEdit = () => { setEditMode(false); setSaveMsg(""); };
 
+  const downloadReport = async () => {
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/metal-orders/${id}/report`);
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error ?? "Error al generar el informe");
+        return;
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `no-disponibles-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const saveQuantities = async () => {
     if (!order) return;
     setSaving(true);
     setSaveMsg("");
     const items = order.items
       .map((it) => ({ id: it.id, quantity: draftQtys[it.id] ?? it.quantity }))
-      .filter((it) => it.quantity >= 1);
+      .filter((it) => it.quantity >= 0);
 
     const res = await fetch(`/api/metal-orders/${id}/items`, {
       method: "PATCH",
@@ -157,13 +180,14 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
     );
   }
 
-  const nextStatus  = STATUS_FLOW[order.status];
-  const isDone      = order.status === "ENTREGADO" || order.status === "CANCELADO";
-  const isOwner     = order.createdBy.id === session?.user?.id;
-  const canAdvance  = nextStatus !== null && (admin || (order.status === "BORRADOR" && isOwner));
-  const canCancel   = !isDone && (admin || (order.status === "BORRADOR" && isOwner));
-  const canEdit     = admin && !isDone;
-  const hasModified = order.items.some((it) => it.originalQuantity !== null);
+  const nextStatus     = STATUS_FLOW[order.status];
+  const isDone         = order.status === "ENTREGADO" || order.status === "CANCELADO";
+  const isOwner        = order.createdBy.id === session?.user?.id;
+  const canAdvance     = nextStatus !== null && (admin || (order.status === "BORRADOR" && isOwner));
+  const canCancel      = !isDone && (admin || (order.status === "BORRADOR" && isOwner));
+  const canEdit        = admin && !isDone;
+  const hasModified    = order.items.some((it) => it.originalQuantity !== null);
+  const hasUnavailable = order.items.some((it) => it.quantity === 0);
 
   // Columnas del grid de artículos
   // Si hay modificaciones: Familia | Descripción | Cant. original | Cant. actual
@@ -231,6 +255,30 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
             </div>
           </CardContent>
         </Card>
+
+        {/* ── Banner: artículos no disponibles ── */}
+        {hasUnavailable && (
+          <div className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-red-700">
+                Hay artículos no disponibles en este pedido
+              </p>
+              <p className="text-xs text-red-500 mt-0.5">
+                El administrador ha marcado {order.items.filter((it) => it.quantity === 0).length}{" "}
+                {order.items.filter((it) => it.quantity === 0).length === 1 ? "artículo" : "artículos"} como no disponible.
+              </p>
+            </div>
+            <Button
+              onClick={downloadReport}
+              loading={downloading}
+              variant="outline"
+              className="gap-1.5 text-sm border-red-300 text-red-600 hover:bg-red-100 hover:text-red-700 shrink-0"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Descargar informe
+            </Button>
+          </div>
+        )}
 
         {/* ── Artículos ── */}
         <Card>
@@ -308,16 +356,20 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
                       {editMode ? (
                         <input
                           type="number"
-                          min={1}
+                          min={0}
                           value={draftVal}
                           onChange={(e) =>
                             setDraftQtys((prev) => ({
                               ...prev,
-                              [item.id]: Math.max(1, Number(e.target.value)),
+                              [item.id]: Math.max(0, Number(e.target.value)),
                             }))
                           }
                           className="w-16 rounded-lg border border-indigo-300 bg-white px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-400"
                         />
+                      ) : wasModified && item.quantity === 0 ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200">
+                          No disponible
+                        </span>
                       ) : wasModified ? (
                         <span className="font-bold text-indigo-700">{item.quantity}</span>
                       ) : (

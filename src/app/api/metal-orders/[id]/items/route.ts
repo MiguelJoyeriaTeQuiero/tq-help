@@ -40,9 +40,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Debes enviar al menos una línea" }, { status: 400 });
   }
 
-  // Validar cantidades
+  // Validar cantidades — 0 está permitido (significa "no disponible" / rechazado)
   for (const p of patches) {
-    if (p.quantity < 1) return NextResponse.json({ error: "La cantidad mínima es 1" }, { status: 400 });
+    if (p.quantity < 0) return NextResponse.json({ error: "La cantidad no puede ser negativa" }, { status: 400 });
   }
 
   // Actualizar cada línea en una transacción
@@ -69,13 +69,16 @@ export async function PATCH(
     }
 
     // Notificación al creador del pedido si no es el propio admin
+    const hasZero = patches.some((p) => p.quantity === 0);
     if (order.createdBy.id !== session.user.id) {
       await tx.notification.create({
         data: {
           userId:  order.createdBy.id,
           type:    "METAL_ORDER_MODIFIED",
-          title:   "Pedido modificado",
-          message: `Un administrador ha ajustado las cantidades de tu pedido de material.`,
+          title:   hasZero ? "Pedido con artículos no disponibles" : "Pedido modificado",
+          message: hasZero
+            ? "Un administrador ha marcado artículos como no disponibles en tu pedido. Descarga el informe para ver el detalle."
+            : "Un administrador ha ajustado las cantidades de tu pedido de material.",
           link:    `/pedidos-metal/${orderId}`,
         },
       });
