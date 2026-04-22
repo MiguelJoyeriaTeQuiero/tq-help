@@ -682,12 +682,13 @@ model MetalOrder {
 }
 
 model MetalOrderItem {
-  id          String      @id @default(cuid())
-  orderId     String
-  order       MetalOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  family      MetalFamily
-  description String?
-  quantity    Int         @default(1)
+  id               String      @id @default(cuid())
+  orderId          String
+  order            MetalOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  family           MetalFamily
+  description      String?
+  quantity         Int         @default(1)
+  originalQuantity Int?        // Se rellena la primera vez que un admin modifica la cantidad
 
   @@map("metal_order_items")
 }
