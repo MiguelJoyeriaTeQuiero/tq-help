@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 interface HeaderProps {
   title?: string;
   onMenuClick?: () => void;
+  scrolled?: boolean;
 }
 
 interface Notification {
@@ -26,7 +27,7 @@ interface Notification {
   link?: string | null;
 }
 
-export function Header({ title, onMenuClick }: HeaderProps) {
+export function Header({ title, onMenuClick, scrolled }: HeaderProps) {
   const { data: session } = useSession();
   const { theme, toggle } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -92,7 +93,13 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const last8 = notifications.slice(0, 8);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
+    <header
+      className={`sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 md:px-6 transition-[background-color,backdrop-filter,border-color,box-shadow] duration-200 ${
+        scrolled
+          ? "bg-white/75 backdrop-blur-md border-slate-200 shadow-token-xs dark:bg-slate-900/75 dark:border-slate-700"
+          : "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800"
+      }`}
+    >
       <div className="flex items-center gap-3">
         {/* Botón hamburger — solo visible en móvil */}
         <button

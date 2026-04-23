@@ -11,6 +11,7 @@ const SIDEBAR_STORAGE_KEY = "tqhelp:sidebar-collapsed";
 export function AppLayout({ children, title }: { children: React.ReactNode; title?: string }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
   // Restaurar estado colapsado desde localStorage
@@ -67,8 +68,16 @@ export function AppLayout({ children, title }: { children: React.ReactNode; titl
         <Header
           title={title}
           onMenuClick={() => setSidebarOpen(true)}
+          scrolled={scrolled}
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6">
+        <main
+          onScroll={(e) => {
+            const top = (e.target as HTMLElement).scrollTop;
+            const next = top > 4;
+            if (next !== scrolled) setScrolled(next);
+          }}
+          className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6"
+        >
           {children}
         </main>
       </div>

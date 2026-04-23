@@ -14,7 +14,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          "inline-flex items-center justify-center rounded-token-lg font-medium transition-[background-color,box-shadow,transform] duration-150 ease-out focus-ring disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
+          "inline-flex items-center justify-center rounded-token-lg font-medium transition-[background-color,box-shadow,transform] duration-150 ease-out focus-ring disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] active:shadow-none",
           {
             "bg-indigo-600 text-white hover:bg-indigo-700 shadow-token-xs hover:shadow-token-sm": variant === "primary",
             "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700": variant === "secondary",
