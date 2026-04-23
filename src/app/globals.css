@@ -26,6 +26,93 @@
   --color-amber-600: #a07840;
 }
 
+/* ──────────────────────────────────────────────
+   Design tokens: radios, sombras, focus, easing
+   ────────────────────────────────────────────── */
+:root {
+  /* Radios */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Sombras multi-capa (contacto + difusa) */
+  --shadow-xs: 0 1px 1px rgba(15, 23, 42, 0.04);
+  --shadow-sm:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md:
+    0 2px 4px rgba(15, 23, 42, 0.05),
+    0 6px 16px -4px rgba(15, 23, 42, 0.08);
+  --shadow-lg:
+    0 4px 8px rgba(15, 23, 42, 0.06),
+    0 16px 32px -8px rgba(15, 23, 42, 0.12);
+  --shadow-xl:
+    0 8px 16px rgba(15, 23, 42, 0.08),
+    0 28px 56px -12px rgba(15, 23, 42, 0.18);
+  --shadow-2xl:
+    0 16px 32px rgba(15, 23, 42, 0.10),
+    0 48px 96px -24px rgba(15, 23, 42, 0.28);
+
+  /* Focus ring homogéneo */
+  --ring-color: #0099f2;
+  --ring-offset: #ffffff;
+  --ring-width: 2px;
+
+  /* Easings */
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Duraciones */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 260ms;
+}
+
+.dark {
+  --ring-offset: #111111;
+  /* Sombras más densas en dark para que se perciban */
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.4);
+  --shadow-sm:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 6px 16px -4px rgba(0, 0, 0, 0.55);
+  --shadow-lg:
+    0 4px 8px rgba(0, 0, 0, 0.45),
+    0 16px 32px -8px rgba(0, 0, 0, 0.65);
+  --shadow-xl:
+    0 8px 16px rgba(0, 0, 0, 0.5),
+    0 28px 56px -12px rgba(0, 0, 0, 0.75);
+  --shadow-2xl:
+    0 16px 32px rgba(0, 0, 0, 0.55),
+    0 48px 96px -24px rgba(0, 0, 0, 0.85);
+}
+
+/* Utilidades que consumen los tokens */
+@layer utilities {
+  .rounded-token-sm { border-radius: var(--radius-sm); }
+  .rounded-token-md { border-radius: var(--radius-md); }
+  .rounded-token-lg { border-radius: var(--radius-lg); }
+  .rounded-token-xl { border-radius: var(--radius-xl); }
+
+  .shadow-token-xs  { box-shadow: var(--shadow-xs); }
+  .shadow-token-sm  { box-shadow: var(--shadow-sm); }
+  .shadow-token-md  { box-shadow: var(--shadow-md); }
+  .shadow-token-lg  { box-shadow: var(--shadow-lg); }
+  .shadow-token-xl  { box-shadow: var(--shadow-xl); }
+  .shadow-token-2xl { box-shadow: var(--shadow-2xl); }
+
+  /* Focus ring unificado: usar junto a focus-visible:outline-none */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--ring-offset),
+      0 0 0 calc(2px + var(--ring-width)) var(--ring-color);
+  }
+}
+
 * {
   box-sizing: border-box;
 }

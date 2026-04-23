@@ -11,10 +11,10 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "stress:smoke":  "k6 run tests/stress/stress-test.js -e SCENARIO=smoke",
-    "stress:load":   "k6 run tests/stress/stress-test.js -e SCENARIO=load",
+    "stress:smoke": "k6 run tests/stress/stress-test.js -e SCENARIO=smoke",
+    "stress:load": "k6 run tests/stress/stress-test.js -e SCENARIO=load",
     "stress:stress": "k6 run tests/stress/stress-test.js -e SCENARIO=stress",
-    "stress:spike":  "k6 run tests/stress/stress-test.js -e SCENARIO=spike"
+    "stress:spike": "k6 run tests/stress/stress-test.js -e SCENARIO=spike"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -55,6 +55,7 @@
     "react-hook-form": "^7.72.1",
     "recharts": "^3.8.1",
     "resend": "^6.11.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "web-push": "^3.6.7",
     "zod": "^4.3.6"
