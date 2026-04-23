@@ -67,10 +67,37 @@
   --dur-fast: 120ms;
   --dur-base: 180ms;
   --dur-slow: 260ms;
+
+  /* ── Tokens semánticos (light) ────────────────────
+     Un único source of truth para fondos/bordes/texto.
+     Los overrides dark mode (más abajo) consumen estos tokens. */
+  --background: #f8fafc;      /* canvas global (slate-50) */
+  --card: #ffffff;            /* superficies elevadas */
+  --card-muted: #f1f5f9;      /* chips, zebra rows (slate-100) */
+  --border: #e2e8f0;          /* border-slate-200 */
+  --border-muted: #f1f5f9;    /* border-slate-100 */
+  --foreground: #0f172a;      /* text-slate-900 */
+  --muted-foreground: #475569;/* text-slate-600 */
+  --muted: #94a3b8;           /* text-slate-400 */
+  --hover-surface: #f1f5f9;   /* hover:bg-slate-100 */
+  --hover-surface-subtle: #f8fafc; /* hover:bg-slate-50 */
 }
 
 .dark {
   --ring-offset: #111111;
+
+  /* ── Tokens semánticos (dark) ──
+     Aquí viven TODOS los colores del modo oscuro. */
+  --background: #111111;
+  --card: #1e2330;
+  --card-muted: #2d3748;
+  --border: #2d3748;
+  --border-muted: #2d3748;
+  --foreground: #f1f5f9;
+  --muted-foreground: #a0aec0;
+  --muted: #4a5568;
+  --hover-surface: #2d3748;
+  --hover-surface-subtle: #1e2330;
   /* Sombras más densas en dark para que se perciban */
   --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.4);
   --shadow-sm:
@@ -111,6 +138,18 @@
       0 0 0 2px var(--ring-offset),
       0 0 0 calc(2px + var(--ring-width)) var(--ring-color);
   }
+
+  /* ── Utilidades semánticas: úsalas en código nuevo ── */
+  .bg-background        { background-color: var(--background); }
+  .bg-card              { background-color: var(--card); }
+  .bg-card-muted        { background-color: var(--card-muted); }
+  .border-border        { border-color: var(--border); }
+  .border-border-muted  { border-color: var(--border-muted); }
+  .text-foreground      { color: var(--foreground); }
+  .text-muted-foreground{ color: var(--muted-foreground); }
+  .text-muted           { color: var(--muted); }
+  .hover\:bg-hover-surface:hover        { background-color: var(--hover-surface); }
+  .hover\:bg-hover-surface-subtle:hover { background-color: var(--hover-surface-subtle); }
 }
 
 * {
@@ -121,25 +160,30 @@ html, body {
   height: 100%;
 }
 
-/* ── Dark mode base styles ── */
+/* ── Dark mode base styles ──
+   Body siempre consume tokens (en light pasan desapercibidos).
+   Los overrides de utilidades legacy de Tailwind se remapean a tokens dark
+   para que el código existente que usa `bg-white`, `text-slate-700`, etc.
+   siga funcionando sin tocarlo. El código NUEVO debería usar las utilidades
+   semánticas (.bg-card, .text-foreground, .border-border). */
 .dark body {
-  background-color: #111111;
-  color: #f1f5f9;
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
-.dark .bg-white { background-color: #1e2330 !important; }
-.dark .bg-slate-50 { background-color: #111111 !important; }
-.dark .bg-slate-100 { background-color: #1e2330 !important; }
-.dark .border-slate-200 { border-color: #2d3748 !important; }
-.dark .border-slate-100 { border-color: #2d3748 !important; }
-.dark .text-slate-900 { color: #f1f5f9 !important; }
-.dark .text-slate-700 { color: #cbd5e0 !important; }
-.dark .text-slate-600 { color: #a0aec0 !important; }
-.dark .text-slate-500 { color: #718096 !important; }
-.dark .text-slate-400 { color: #4a5568 !important; }
-.dark .hover\:bg-slate-100:hover { background-color: #2d3748 !important; }
-.dark .hover\:bg-slate-50:hover { background-color: #1e2330 !important; }
-.dark .divide-slate-100 > * + * { border-color: #2d3748 !important; }
+.dark .bg-white                       { background-color: var(--card) !important; }
+.dark .bg-slate-50                    { background-color: var(--background) !important; }
+.dark .bg-slate-100                   { background-color: var(--card) !important; }
+.dark .border-slate-200               { border-color: var(--border) !important; }
+.dark .border-slate-100               { border-color: var(--border-muted) !important; }
+.dark .text-slate-900                 { color: var(--foreground) !important; }
+.dark .text-slate-700                 { color: #cbd5e0 !important; }
+.dark .text-slate-600                 { color: var(--muted-foreground) !important; }
+.dark .text-slate-500                 { color: #718096 !important; }
+.dark .text-slate-400                 { color: var(--muted) !important; }
+.dark .hover\:bg-slate-100:hover      { background-color: var(--hover-surface) !important; }
+.dark .hover\:bg-slate-50:hover       { background-color: var(--hover-surface-subtle) !important; }
+.dark .divide-slate-100 > * + *       { border-color: var(--border) !important; }
 
 /* ── Custom scrollbars: finas, solo visibles al hover ── */
 @media (pointer: fine) {
