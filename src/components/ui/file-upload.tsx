@@ -31,6 +31,8 @@ export function FileUpload({ onUpload, maxFiles = 10 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragDepth = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = async (selected: FileList) => {
@@ -72,8 +74,38 @@ export function FileUpload({ onUpload, maxFiles = 10 }: FileUploadProps) {
   const images = files.filter((f) => isImage(f.mimeType));
   const others = files.filter((f) => !isImage(f.mimeType));
 
+  const canAccept = files.length < maxFiles && !uploading;
+
   return (
-    <div className="space-y-3">
+    <div
+      className={`space-y-3 rounded-token-lg transition-[background-color,box-shadow,outline-color] duration-150 ${
+        isDragging
+          ? "outline outline-2 outline-dashed outline-indigo-500 bg-indigo-50/60 dark:bg-indigo-500/10 p-3 -m-3 shadow-token-sm"
+          : ""
+      }`}
+      onDragEnter={(e) => {
+        if (!canAccept) return;
+        e.preventDefault();
+        dragDepth.current += 1;
+        setIsDragging(true);
+      }}
+      onDragOver={(e) => {
+        if (!canAccept) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }}
+      onDragLeave={() => {
+        dragDepth.current = Math.max(0, dragDepth.current - 1);
+        if (dragDepth.current === 0) setIsDragging(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        dragDepth.current = 0;
+        setIsDragging(false);
+        if (!canAccept) return;
+        if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+      }}
+    >
       {/* Previews de imágenes */}
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -144,6 +176,11 @@ export function FileUpload({ onUpload, maxFiles = 10 }: FileUploadProps) {
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
       />
       {error && <p className="text-xs text-red-600">{error}</p>}
+      {isDragging && (
+        <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+          Suelta los archivos aquí para subirlos…
+        </p>
+      )}
     </div>
   );
 }

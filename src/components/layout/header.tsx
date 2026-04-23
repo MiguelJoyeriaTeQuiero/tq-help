@@ -5,7 +5,7 @@ import { BellIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from "@heroicons/re
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useTheme } from "@/components/theme-provider";
 import { GlobalSearch } from "@/components/search/global-search";
@@ -91,6 +91,16 @@ export function Header({ title, onMenuClick, scrolled }: HeaderProps) {
   };
 
   const last8 = notifications.slice(0, 8);
+
+  // Agrupar por día: "Hoy" / "Ayer" / "dd MMM"
+  const groupedLast8 = last8.reduce<Array<{ label: string; items: Notification[] }>>((acc, n) => {
+    const d = new Date(n.createdAt);
+    const label = isToday(d) ? "Hoy" : isYesterday(d) ? "Ayer" : format(d, "d MMM", { locale: es });
+    const last = acc[acc.length - 1];
+    if (last && last.label === label) last.items.push(n);
+    else acc.push({ label, items: [n] });
+    return acc;
+  }, []);
 
   return (
     <header
@@ -194,7 +204,7 @@ export function Header({ title, onMenuClick, scrolled }: HeaderProps) {
               </div>
 
               {/* Notification list */}
-              <div className="max-h-96 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+              <div className="max-h-96 overflow-y-auto">
                 {last8.length === 0 ? (
                   <EmptyState
                     icon="bell"
@@ -203,32 +213,41 @@ export function Header({ title, onMenuClick, scrolled }: HeaderProps) {
                     compact
                   />
                 ) : (
-                  last8.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`px-4 py-3 text-sm ${!n.read ? "bg-indigo-50" : "bg-white"}`}
-                    >
-                      {n.link ? (
-                        <Link
-                          href={n.link}
-                          onClick={() => handleNotificationClick(n.id)}
-                          className="block hover:opacity-80 transition-opacity"
-                        >
-                          <p className="font-medium text-slate-800 truncate">{n.title}</p>
-                          <p className="text-slate-600 mt-0.5 line-clamp-2">{n.message}</p>
-                          <p className="text-xs text-slate-400 mt-1">
-                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
-                          </p>
-                        </Link>
-                      ) : (
-                        <div onClick={() => handleNotificationClick(n.id)} className="cursor-pointer">
-                          <p className="font-medium text-slate-800 truncate">{n.title}</p>
-                          <p className="text-slate-600 mt-0.5 line-clamp-2">{n.message}</p>
-                          <p className="text-xs text-slate-400 mt-1">
-                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
-                          </p>
-                        </div>
-                      )}
+                  groupedLast8.map((group) => (
+                    <div key={group.label}>
+                      <div className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm dark:bg-slate-800/80 px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700">
+                        {group.label}
+                      </div>
+                      <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                        {group.items.map((n) => (
+                          <div
+                            key={n.id}
+                            className={`px-4 py-3 text-sm ${!n.read ? "bg-indigo-50 dark:bg-indigo-500/10" : "bg-white dark:bg-slate-900"}`}
+                          >
+                            {n.link ? (
+                              <Link
+                                href={n.link}
+                                onClick={() => handleNotificationClick(n.id)}
+                                className="block hover:opacity-80 transition-opacity"
+                              >
+                                <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{n.title}</p>
+                                <p className="text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-2">{n.message}</p>
+                                <p className="text-xs text-slate-400 mt-1">
+                                  {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
+                                </p>
+                              </Link>
+                            ) : (
+                              <div onClick={() => handleNotificationClick(n.id)} className="cursor-pointer">
+                                <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{n.title}</p>
+                                <p className="text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-2">{n.message}</p>
+                                <p className="text-xs text-slate-400 mt-1">
+                                  {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))
                 )}
