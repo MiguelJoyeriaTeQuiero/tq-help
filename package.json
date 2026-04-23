@@ -10,7 +10,11 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "stress:smoke":  "k6 run tests/stress/stress-test.js -e SCENARIO=smoke",
+    "stress:load":   "k6 run tests/stress/stress-test.js -e SCENARIO=load",
+    "stress:stress": "k6 run tests/stress/stress-test.js -e SCENARIO=stress",
+    "stress:spike":  "k6 run tests/stress/stress-test.js -e SCENARIO=spike"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
