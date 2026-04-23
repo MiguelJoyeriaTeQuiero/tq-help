@@ -14,6 +14,7 @@ import {
 } from "@/lib/metal-families";
 import { getDeptLabel } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import {
   CheckIcon,
   XMarkIcon,
@@ -104,7 +105,7 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
       const res = await fetch(`/api/metal-orders/${id}/report`);
       if (!res.ok) {
         const err = await res.json();
-        alert(err.error ?? "Error al generar el informe");
+        toast.error(err.error ?? "Error al generar el informe");
         return;
       }
       const blob = await res.blob();
@@ -136,9 +137,9 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
     if (res.ok) {
       setOrder(data);
       setEditMode(false);
-      setSaveMsg("Cantidades actualizadas. Se ha notificado a la tienda.");
+      toast.success("Cantidades actualizadas", { description: "Se ha notificado a la tienda." });
     } else {
-      setSaveMsg(data.error ?? "Error al guardar");
+      toast.error(data.error ?? "Error al guardar");
     }
     setSaving(false);
   };
@@ -157,8 +158,13 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
 
   const deleteOrder = async () => {
     if (!confirm("¿Eliminar este borrador?")) return;
-    await fetch(`/api/metal-orders/${id}`, { method: "DELETE" });
-    router.push("/pedidos-metal");
+    const res = await fetch(`/api/metal-orders/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Borrador eliminado");
+      router.push("/pedidos-metal");
+    } else {
+      toast.error("No se pudo eliminar");
+    }
   };
 
   if (loading) {

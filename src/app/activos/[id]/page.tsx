@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -130,8 +131,13 @@ export default function AssetDetailPage() {
 
   const handleDelete = async () => {
     if (!confirm(`¿Eliminar el activo "${asset?.name}"? Esta acción es irreversible.`)) return;
-    await fetch(`/api/assets/${id}`, { method: "DELETE" });
-    router.push("/activos");
+    const res = await fetch(`/api/assets/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Activo eliminado");
+      router.push("/activos");
+    } else {
+      toast.error("No se pudo eliminar");
+    }
   };
 
   const setF = (k: string, v: string) => setEditForm((f: any) => ({ ...f, [k]: v }));

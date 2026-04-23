@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card } from "@/components/ui/card";
+import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -140,8 +141,13 @@ export default function ReglasPage() {
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`¿Eliminar la regla "${name}"?`)) return;
-    await fetch(`/api/business-rules/${id}`, { method: "DELETE" });
-    load();
+    const res = await fetch(`/api/business-rules/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Regla eliminada");
+      load();
+    } else {
+      toast.error("No se pudo eliminar");
+    }
   };
 
   const toggleActive = async (r: any) => {

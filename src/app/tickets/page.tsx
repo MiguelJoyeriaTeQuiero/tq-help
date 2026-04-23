@@ -14,7 +14,7 @@ import { getDeptLabel } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusIcon, ExclamationTriangleIcon, ClockIcon } from "@heroicons/react/24/outline";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonList, SkeletonTable } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 
 type Tab = "activas" | "historico";
@@ -109,34 +109,12 @@ export default function TicketsPage() {
   // ── Skeleton ──────────────────────────────────────────────────────────────
   const skeleton = (
     <>
-      <div className="flex flex-col gap-2 md:hidden">
-        {[1,2,3,4].map(i => (
-          <div key={i} className="rounded-xl border border-slate-200 p-3 space-y-2">
-            <div className="flex justify-between gap-2">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-5 w-20 rounded-full" />
-            </div>
-            <div className="flex gap-2">
-              <Skeleton className="h-4 w-12 rounded-full" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          </div>
-        ))}
+      <div className="md:hidden">
+        <SkeletonList rows={4} />
       </div>
-      <Card className="hidden md:block">
-        <div className="divide-y divide-slate-100">
-          {[1,2,3,4,5].map(i => (
-            <div key={i} className="flex items-center gap-4 px-4 py-3">
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-5 w-16 rounded-full" />
-              <Skeleton className="h-5 w-20 rounded-full" />
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          ))}
-        </div>
-      </Card>
+      <div className="hidden md:block">
+        <SkeletonTable rows={6} columns={5} />
+      </div>
     </>
   );
 

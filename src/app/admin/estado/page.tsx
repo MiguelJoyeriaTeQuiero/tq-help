@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -89,8 +90,13 @@ export default function EstadoAdminPage() {
 
   const deleteService = async (serviceId: string) => {
     if (!confirm("¿Eliminar este servicio y todos sus incidentes?")) return;
-    await fetch(`/api/status/${serviceId}`, { method: "DELETE" });
-    load();
+    const res = await fetch(`/api/status/${serviceId}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Servicio eliminado");
+      load();
+    } else {
+      toast.error("No se pudo eliminar");
+    }
   };
 
   return (

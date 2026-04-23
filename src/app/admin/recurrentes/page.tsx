@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusIcon, PencilIcon, TrashIcon, PlayIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { Pagination } from "@/components/ui/pagination";
+import { toast } from "@/components/ui/toast";
 
 const PRIORITY_OPTIONS = [
   { value: "BAJA", label: "Baja" },
@@ -110,8 +111,13 @@ export default function RecurrentesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este ticket recurrente?")) return;
-    await fetch(`/api/recurring-tickets/${id}`, { method: "DELETE" });
-    load();
+    const res = await fetch(`/api/recurring-tickets/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Ticket recurrente eliminado");
+      load();
+    } else {
+      toast.error("No se pudo eliminar");
+    }
   };
 
   const handleTrigger = async (id: string) => {
@@ -120,10 +126,12 @@ export default function RecurrentesPage() {
     setTriggering(null);
     if (res.ok) {
       const d = await res.json();
-      alert(`✅ Ticket creado: ${d.ticket?.id}\nPróxima ejecución: ${format(new Date(d.nextRunAt), "dd/MM/yyyy", { locale: es })}`);
+      toast.success(`Ticket creado: ${d.ticket?.id}`, {
+        description: `Próxima ejecución: ${format(new Date(d.nextRunAt), "dd/MM/yyyy", { locale: es })}`,
+      });
       load();
     } else {
-      alert("Error al ejecutar");
+      toast.error("Error al ejecutar");
     }
   };
 

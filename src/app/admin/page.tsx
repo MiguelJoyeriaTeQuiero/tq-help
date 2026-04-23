@@ -15,7 +15,8 @@ import {
   ExclamationTriangleIcon, ArrowPathIcon, DocumentArrowDownIcon,
   TableCellsIcon, CalendarIcon,
 } from "@heroicons/react/24/outline";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonCard, SkeletonStats } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import Link from "next/link";
 
 // Dynamic imports — chart libs need browser APIs
@@ -139,7 +140,7 @@ export default function AdminPage() {
       const a    = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: filename });
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(a.href);
-    } catch { alert("No se pudo generar el archivo."); }
+    } catch { toast.error("No se pudo generar el archivo."); }
     finally { setDl(null); }
   };
 
@@ -190,9 +191,7 @@ export default function AdminPage() {
 
             {/* Static KPIs (extra context) */}
             {loadingMain ? (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-                {[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
-              </div>
+              <SkeletonStats count={3} className="lg:grid-cols-3" />
             ) : metrics && (
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-2">
                 <StatKpi icon={<ClockIcon className="h-5 w-5 text-green-600"/>}       bg="bg-green-50"  value={`${metrics.avgResolutionHours}h`} label="T. medio resolución (30d)" />
@@ -203,12 +202,7 @@ export default function AdminPage() {
             {/* Content grid */}
             {loadingMain ? (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 space-y-3">
-                    <Skeleton className="h-5 w-44" />
-                    {[1,2,3,4].map(j => <Skeleton key={j} className="h-4 w-full" />)}
-                  </div>
-                ))}
+                {[1,2,3,4].map(i => <SkeletonCard key={i} lines={4} />)}
               </div>
             ) : metrics && (
               <>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -81,8 +82,13 @@ export default function FaqAdminPage() {
 
   const deleteItem = async (item: FaqItem) => {
     if (!confirm("¿Eliminar esta pregunta?")) return;
-    await fetch(`/api/faq/${item.id}`, { method: "DELETE" });
-    load();
+    const res = await fetch(`/api/faq/${item.id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Pregunta eliminada");
+      load();
+    } else {
+      toast.error("No se pudo eliminar");
+    }
   };
 
   const filtered = items.filter(
