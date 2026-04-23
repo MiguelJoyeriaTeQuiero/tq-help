@@ -9,6 +9,8 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useTheme } from "@/components/theme-provider";
 import { GlobalSearch } from "@/components/search/global-search";
+import { AnimatePresence, motion } from "framer-motion";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface HeaderProps {
   title?: string;
@@ -134,16 +136,33 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             aria-label="Notificaciones"
           >
             <BellIcon className="h-6 w-6 text-slate-500 hover:text-slate-700" />
-            {unread > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold leading-none">
-                {unread > 9 ? "9+" : unread}
-              </span>
-            )}
+            <AnimatePresence>
+              {unread > 0 && (
+                <motion.span
+                  key={unread}
+                  aria-live="polite"
+                  className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold leading-none"
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.6, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 22 }}
+                >
+                  {unread > 9 ? "9+" : unread}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
 
           {/* Dropdown panel */}
+          <AnimatePresence>
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-slate-200 bg-white shadow-lg z-50">
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 420, damping: 30 }}
+              className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-token-xl border border-slate-200 bg-white shadow-token-xl z-50 dark:border-slate-700 dark:bg-slate-900 origin-top-right"
+            >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                 <span className="text-sm font-semibold text-slate-900">Notificaciones</span>
@@ -168,11 +187,14 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               </div>
 
               {/* Notification list */}
-              <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+              <div className="max-h-96 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
                 {last8.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-sm text-slate-400">
-                    No tienes notificaciones
-                  </p>
+                  <EmptyState
+                    icon="bell"
+                    title="Sin notificaciones"
+                    description="Cuando tengas nuevas te avisaremos aquí."
+                    compact
+                  />
                 ) : (
                   last8.map((n) => (
                     <div
@@ -215,8 +237,9 @@ export function Header({ title, onMenuClick }: HeaderProps) {
                   Ver todas →
                 </Link>
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

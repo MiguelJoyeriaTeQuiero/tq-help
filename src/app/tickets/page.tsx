@@ -16,6 +16,8 @@ import { es } from "date-fns/locale";
 import { PlusIcon, ExclamationTriangleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { SkeletonList, SkeletonTable } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AnimatePresence, motion } from "framer-motion";
 
 type Tab = "activas" | "historico";
 
@@ -123,8 +125,14 @@ export default function TicketsPage() {
     <>
       {/* Vista móvil */}
       <div className="flex flex-col gap-2 md:hidden">
-        {tickets.map((ticket) => (
-          <Link key={ticket.id} href={`/tickets/${ticket.id}`}>
+        {tickets.map((ticket, idx) => (
+          <motion.div
+            key={ticket.id}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: Math.min(idx, 10) * 0.03, ease: [0.2, 0.8, 0.2, 1] }}
+          >
+          <Link href={`/tickets/${ticket.id}`}>
             <Card className="p-3 hover:shadow-md transition-shadow active:scale-[0.99]">
               <div className="flex items-start justify-between gap-2">
                 <p className="font-medium text-slate-900 text-sm leading-snug">
@@ -161,6 +169,7 @@ export default function TicketsPage() {
               )}
             </Card>
           </Link>
+          </motion.div>
         ))}
         <p className="text-xs text-slate-400 text-center py-1">
           Mostrando {Math.min((page-1)*pageSize+1, total)}–{Math.min(page*pageSize, total)} de {total} incidencia{total !== 1 ? "s" : ""}
@@ -169,23 +178,29 @@ export default function TicketsPage() {
       </div>
 
       {/* Vista escritorio */}
-      <Card className="hidden md:block">
+      <Card className="hidden md:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left">
-                <th className="px-4 py-3 font-medium text-slate-500">Incidencia</th>
-                <th className="px-4 py-3 font-medium text-slate-500">Prioridad</th>
-                <th className="px-4 py-3 font-medium text-slate-500">Estado</th>
-                <th className="px-4 py-3 font-medium text-slate-500 hidden md:table-cell">Dept. destino</th>
-                <th className="px-4 py-3 font-medium text-slate-500 hidden lg:table-cell">Creado</th>
+            <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
+              <tr className="border-b border-slate-200 dark:border-slate-700 text-left">
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Incidencia</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Prioridad</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estado</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden md:table-cell">Dept. destino</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden lg:table-cell">Creado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {tickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-slate-50 transition-colors">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {tickets.map((ticket, idx) => (
+                <motion.tr
+                  key={ticket.id}
+                  initial={{ opacity: 0, y: 3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, delay: Math.min(idx, 12) * 0.03, ease: [0.2, 0.8, 0.2, 1] }}
+                  className="group hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                >
                   <td className="px-4 py-3">
-                    <Link href={`/tickets/${ticket.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
+                    <Link href={`/tickets/${ticket.id}`} className="font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">
                       {ticket.slaBreached && (
                         <ExclamationTriangleIcon className="inline h-4 w-4 text-red-500 mr-1" />
                       )}
@@ -209,18 +224,18 @@ export default function TicketsPage() {
                   <td className="px-4 py-3">
                     <TicketStatusBadge status={ticket.status} />
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-slate-500">
+                  <td className="px-4 py-3 hidden md:table-cell text-slate-500 dark:text-slate-400">
                     {ticket.targetDept.map((k: string) => getDeptLabel(k)).join(", ")}
                   </td>
                   <td className="px-4 py-3 hidden lg:table-cell text-slate-400">
                     {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true, locale: es })}
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 border-t border-slate-100 text-sm text-slate-500 flex items-center justify-between flex-wrap gap-2">
+        <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 flex items-center justify-between flex-wrap gap-2">
           <span>
             Mostrando {Math.min((page-1)*pageSize+1, total)}–{Math.min(page*pageSize, total)} de {total} incidencia{total !== 1 ? "s" : ""}
           </span>
@@ -239,28 +254,33 @@ export default function TicketsPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
 
           {/* Tabs */}
-          <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
-            <button
-              onClick={() => switchTab("activas")}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                tab === "activas"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              Activas
-            </button>
-            <button
-              onClick={() => switchTab("historico")}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                tab === "historico"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <ClockIcon className="h-3.5 w-3.5" />
-              Histórico
-            </button>
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-token-lg p-1">
+            {(["activas", "historico"] as const).map((t) => {
+              const active = tab === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => switchTab(t)}
+                  className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-token-md text-sm font-medium transition-colors ${
+                    active
+                      ? "text-slate-900 dark:text-white"
+                      : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="tickets-tab-indicator"
+                      className="absolute inset-0 rounded-token-md bg-white shadow-token-sm dark:bg-slate-900"
+                      transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    />
+                  )}
+                  <span className="relative flex items-center gap-1.5">
+                    {t === "historico" && <ClockIcon className="h-3.5 w-3.5" />}
+                    {t === "activas" ? "Activas" : "Histórico"}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {session?.user.role !== "VIEWER" && (
@@ -301,11 +321,27 @@ export default function TicketsPage() {
         {loading ? (
           skeleton
         ) : tickets.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            {tab === "activas"
-              ? "No hay incidencias activas"
-              : "No hay incidencias en el histórico"}
-          </div>
+          <Card>
+            <EmptyState
+              icon={tab === "activas" ? "inbox" : "folder"}
+              title={tab === "activas" ? "No hay incidencias activas" : "Sin histórico aún"}
+              description={
+                tab === "activas"
+                  ? "Cuando se abran nuevas incidencias aparecerán aquí."
+                  : "Las incidencias resueltas o cerradas se mostrarán en este listado."
+              }
+              action={
+                tab === "activas" && session?.user.role !== "VIEWER" ? (
+                  <Link href="/tickets/nuevo">
+                    <Button>
+                      <PlusIcon className="mr-1 h-4 w-4" />
+                      Nueva incidencia
+                    </Button>
+                  </Link>
+                ) : undefined
+              }
+            />
+          </Card>
         ) : (
           ticketList
         )}

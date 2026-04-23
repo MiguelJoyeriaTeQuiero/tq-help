@@ -6,9 +6,30 @@ import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { BottomNav } from "./bottom-nav";
 
+const SIDEBAR_STORAGE_KEY = "tqhelp:sidebar-collapsed";
+
 export function AppLayout({ children, title }: { children: React.ReactNode; title?: string }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+
+  // Restaurar estado colapsado desde localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      if (stored === "1") setCollapsed(true);
+    } catch {}
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, next ? "1" : "0");
+      } catch {}
+      return next;
+    });
+  };
 
   // Cierra el sidebar al navegar en móvil
   useEffect(() => {
@@ -29,12 +50,16 @@ export function AppLayout({ children, title }: { children: React.ReactNode; titl
       {/* Sidebar: fijo en desktop, drawer en móvil */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-30 w-64 transform transition-transform duration-200 ease-in-out
+          fixed inset-y-0 left-0 z-30 transform transition-transform duration-200 ease-in-out
           lg:relative lg:translate-x-0 lg:z-auto
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <Sidebar onClose={() => setSidebarOpen(false)} />
+        <Sidebar
+          onClose={() => setSidebarOpen(false)}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapsed}
+        />
       </div>
 
       {/* Contenido principal */}

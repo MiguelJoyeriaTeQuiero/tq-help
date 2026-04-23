@@ -16,6 +16,8 @@ import { PlusIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { HandThumbUpIcon as HandThumbUpSolid } from "@heroicons/react/24/solid";
 import { Pagination } from "@/components/ui/pagination";
+import { EmptyState } from "@/components/ui/empty-state";
+import { motion } from "framer-motion";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos los estados" },
@@ -91,11 +93,31 @@ export default function PeticionesPage() {
         {loading ? (
           <SkeletonList rows={4} />
         ) : features.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">No hay peticiones</div>
+          <Card>
+            <EmptyState
+              icon="sparkles"
+              title="Aún no hay peticiones"
+              description="Propón una mejora o idea y empieza a recoger votos del equipo."
+              action={session?.user.role !== "VIEWER" ? (
+                <Link href="/peticiones/nueva">
+                  <Button>
+                    <PlusIcon className="mr-1 h-4 w-4" />
+                    Nueva petición
+                  </Button>
+                </Link>
+              ) : undefined}
+            />
+          </Card>
         ) : (
           <div className="space-y-3">
-            {features.map((f) => (
-              <Card key={f.id} className="p-4 flex items-start gap-4">
+            {features.map((f, idx) => (
+              <motion.div
+                key={f.id}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: Math.min(idx, 10) * 0.03, ease: [0.2, 0.8, 0.2, 1] }}
+              >
+              <Card className="p-4 flex items-start gap-4">
                 {/* Botón de voto */}
                 <div className="flex flex-col items-center gap-1 min-w-[48px]">
                   <button
@@ -130,6 +152,7 @@ export default function PeticionesPage() {
                   </p>
                 </div>
               </Card>
+              </motion.div>
             ))}
           </div>
         )}

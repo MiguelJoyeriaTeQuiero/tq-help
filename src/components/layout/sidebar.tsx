@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn, getDeptLabel, ROLE_LABELS } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   TicketIcon,
   LightBulbIcon,
@@ -22,6 +23,8 @@ import {
   QuestionMarkCircleIcon,
   CursorArrowRaysIcon,
   CubeIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
 } from "@heroicons/react/24/outline";
 
 const navItems = [
@@ -44,9 +47,11 @@ const navItems = [
 
 interface SidebarProps {
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function Sidebar({ onClose }: SidebarProps) {
+export function Sidebar({ onClose, collapsed = false, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const role = session?.user?.role;
@@ -54,61 +59,138 @@ export function Sidebar({ onClose }: SidebarProps) {
   const visible = navItems.filter((item) => !role || item.roles.includes(role));
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
-      {/* Logo + botón cerrar (solo móvil) */}
-      <div className="flex h-16 items-center justify-between px-5 border-b border-slate-200">
-        <Logo className="h-8 w-auto" />
-        <button
-          onClick={onClose}
-          className="lg:hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-          aria-label="Cerrar menú"
+    <Tooltip.Provider delayDuration={150} skipDelayDuration={100}>
+      <aside
+        className={cn(
+          "flex h-full flex-col border-r border-slate-200 bg-white transition-[width] duration-200 ease-out dark:border-slate-700",
+          collapsed ? "w-[72px]" : "w-64"
+        )}
+      >
+        {/* Logo + cerrar móvil + toggle colapso */}
+        <div
+          className={cn(
+            "flex h-16 items-center border-b border-slate-200 dark:border-slate-700",
+            collapsed ? "justify-center px-2" : "justify-between px-5"
+          )}
         >
-          <XMarkIcon className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Navegación */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-        {visible.map((item) => {
-          const Icon = item.icon;
-          const active = item.exact
-            ? pathname === item.href
-            : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
+          {!collapsed && <Logo className="h-8 w-auto" />}
+          <div className="flex items-center gap-1">
+            <button
               onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              )}
+              className="lg:hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              aria-label="Cerrar menú"
             >
-              <Icon className="h-5 w-5 flex-shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Perfil de usuario */}
-      {session?.user && (
-        <div className="border-t border-slate-200 px-4 py-3">
-          <p className="text-sm font-medium text-slate-900 truncate">{session.user.name}</p>
-          <p className="text-xs text-slate-500 truncate">
-            {getDeptLabel(session.user.department)} · {ROLE_LABELS[session.user.role]}
-          </p>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="mt-2 flex items-center gap-2 text-xs text-slate-400 hover:text-red-500 transition-colors"
-          >
-            <ArrowRightOnRectangleIcon className="h-4 w-4" />
-            Cerrar sesión
-          </button>
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+            {onToggleCollapse && (
+              <button
+                onClick={onToggleCollapse}
+                className="hidden lg:inline-flex rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+              >
+                {collapsed
+                  ? <ChevronDoubleRightIcon className="h-4 w-4" />
+                  : <ChevronDoubleLeftIcon className="h-4 w-4" />
+                }
+              </button>
+            )}
+          </div>
         </div>
-      )}
-    </aside>
+
+        {/* Navegación */}
+        <nav className={cn("flex-1 overflow-y-auto py-4 space-y-0.5", collapsed ? "px-2" : "px-3")}>
+          {visible.map((item) => {
+            const Icon = item.icon;
+            const active = item.exact
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
+
+            const linkEl = (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center rounded-lg text-sm font-medium transition-colors",
+                  collapsed ? "justify-center h-10 w-full" : "gap-3 px-3 py-2.5",
+                  active
+                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                )}
+                aria-label={collapsed ? item.label : undefined}
+              >
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && <span className="truncate">{item.label}</span>}
+              </Link>
+            );
+
+            if (!collapsed) return linkEl;
+            return (
+              <Tooltip.Root key={item.href}>
+                <Tooltip.Trigger asChild>{linkEl}</Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="right"
+                    sideOffset={8}
+                    className="z-50 rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white shadow-token-lg"
+                  >
+                    {item.label}
+                    <Tooltip.Arrow className="fill-slate-900" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            );
+          })}
+        </nav>
+
+        {/* Perfil */}
+        {session?.user && (
+          <div
+            className={cn(
+              "border-t border-slate-200 dark:border-slate-700",
+              collapsed ? "px-2 py-3" : "px-4 py-3"
+            )}
+          >
+            {collapsed ? (
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="flex h-10 w-full items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-red-500 transition-colors"
+                    aria-label="Cerrar sesión"
+                  >
+                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="right"
+                    sideOffset={8}
+                    className="z-50 rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white shadow-token-lg"
+                  >
+                    Cerrar sesión
+                    <Tooltip.Arrow className="fill-slate-900" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-slate-900 truncate">{session.user.name}</p>
+                <p className="text-xs text-slate-500 truncate">
+                  {getDeptLabel(session.user.department)} · {ROLE_LABELS[session.user.role]}
+                </p>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="mt-2 flex items-center gap-2 text-xs text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  Cerrar sesión
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </aside>
+    </Tooltip.Provider>
   );
 }
