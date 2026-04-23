@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Skeleton, SkeletonCard, SkeletonStats } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { useTopProgress } from "@/components/ui/top-progress";
 import Link from "next/link";
 
 // Dynamic imports — chart libs need browser APIs
@@ -89,6 +90,7 @@ export default function AdminPage() {
   const [fromDate,  setFromDate]    = useState(defaults.from);
   const [toDate,    setToDate]      = useState(defaults.to);
   const [downloading, setDl]        = useState<string | null>(null);
+  const topProgress = useTopProgress();
 
   // Live metrics (SSE)
   const { data: live, status: liveStatus } = useLiveMetrics();
@@ -122,6 +124,7 @@ export default function AdminPage() {
 
   const downloadFile = async (type: "pdf" | "tickets-csv" | "features-csv") => {
     setDl(type);
+    const progressId = topProgress.start();
     try {
       let url: string, filename: string;
       if (type === "pdf") {
@@ -141,7 +144,7 @@ export default function AdminPage() {
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(a.href);
     } catch { toast.error("No se pudo generar el archivo."); }
-    finally { setDl(null); }
+    finally { topProgress.done(progressId); setDl(null); }
   };
 
   // ── Render ──────────────────────────────────────────────────────────────

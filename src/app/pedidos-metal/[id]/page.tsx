@@ -15,6 +15,7 @@ import {
 import { getDeptLabel } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { useTopProgress } from "@/components/ui/top-progress";
 import {
   CheckIcon,
   XMarkIcon,
@@ -80,6 +81,7 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
   const [saving,     setSaving]     = useState(false);
   const [saveMsg,    setSaveMsg]    = useState("");
   const [downloading, setDownloading] = useState(false);
+  const topProgress = useTopProgress();
 
   useEffect(() => {
     fetch(`/api/metal-orders/${id}`)
@@ -101,6 +103,7 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
 
   const downloadReport = async () => {
     setDownloading(true);
+    const progressId = topProgress.start();
     try {
       const res = await fetch(`/api/metal-orders/${id}/report`);
       if (!res.ok) {
@@ -116,6 +119,7 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
       a.click();
       URL.revokeObjectURL(url);
     } finally {
+      topProgress.done(progressId);
       setDownloading(false);
     }
   };
