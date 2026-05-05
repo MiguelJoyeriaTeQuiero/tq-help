@@ -55,10 +55,13 @@ export default function NuevoPedidoMetalPage() {
     [quantities]
   );
 
+  const normalize = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
   const filteredArticles = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = normalize(search.trim());
     if (!q) return MATERIAL_CATALOG[activeTab];
-    return MATERIAL_CATALOG[activeTab].filter((a) => a.toLowerCase().includes(q));
+    return MATERIAL_CATALOG[activeTab].filter((a) => normalize(a).includes(q));
   }, [activeTab, search]);
 
   const submit = async (send: boolean) => {
