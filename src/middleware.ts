@@ -20,6 +20,7 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/api/widget") ||
     nextUrl.pathname.startsWith("/api/chatbot") ||
     nextUrl.pathname.startsWith("/api/health") ||
+    nextUrl.pathname.startsWith("/api/integration") ||
     nextUrl.pathname.startsWith("/monitoring");
 
   if (!isLoggedIn && !isPublicPath) {
