@@ -146,6 +146,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   }
 
+  // Outgoing webhook to TQ Academy when a linked action is resolved or closed
+  if (
+    (status === "RESUELTO" || status === "CERRADO") &&
+    status !== ticket.status &&
+    ticket.tqacademyAccionId &&
+    process.env.TQACADEMY_WEBHOOK_URL &&
+    process.env.TQACADEMY_INTEGRATION_SECRET
+  ) {
+    fetch(`${process.env.TQACADEMY_WEBHOOK_URL}/api/webhooks/helpdesk`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.TQACADEMY_INTEGRATION_SECRET}`,
+      },
+      body: JSON.stringify({
+        accion_id: ticket.tqacademyAccionId,
+        ticket_id: id,
+        status,
+      }),
+    }).catch(() => {});
+  }
+
   // CSAT notification when ticket is closed
   if (status === "CERRADO" && status !== ticket.status) {
     const csatPayload = {

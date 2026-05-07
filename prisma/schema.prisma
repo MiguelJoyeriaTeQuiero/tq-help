@@ -360,12 +360,13 @@ model Ticket {
   approvalStatus   ApprovalStatus?
   recurringSourceId String?
   recurringSource  RecurringTicket? @relation("RecurringSource", fields: [recurringSourceId], references: [id])
-  mergedIntoId     String?
-  mergedInto       Ticket?          @relation("MergedInto", fields: [mergedIntoId], references: [id])
-  mergedTickets    Ticket[]         @relation("MergedInto")
-  relationsFrom    TicketRelation[] @relation("RelationSource")
-  relationsTo      TicketRelation[] @relation("RelationTarget")
-  csat             TicketCsat?
+  mergedIntoId        String?
+  mergedInto          Ticket?          @relation("MergedInto", fields: [mergedIntoId], references: [id])
+  mergedTickets       Ticket[]         @relation("MergedInto")
+  relationsFrom       TicketRelation[] @relation("RelationSource")
+  relationsTo         TicketRelation[] @relation("RelationTarget")
+  csat                TicketCsat?
+  tqacademyAccionId   String?          @unique
 
   @@map("tickets")
 }
