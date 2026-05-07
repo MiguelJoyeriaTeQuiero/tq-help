@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateSlaDeadline } from "@/lib/sla";
+import { TicketPriority } from "@prisma/client";
 import { z } from "zod";
 
 const schema = z.object({
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
     `_Tienda: ${tiendaNombre}${tiendaIsla ? ` · ${tiendaIsla}` : ""} · Visita ID: ${visitaId}_`,
   ].join("\n");
 
-  const slaDeadline = calculateSlaDeadline(prioridad);
+  const slaDeadline = calculateSlaDeadline(prioridad as TicketPriority);
   const ticket = await prisma.ticket.create({
     data: {
       title: titulo,
