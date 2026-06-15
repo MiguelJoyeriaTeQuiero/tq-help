@@ -64,6 +64,14 @@ export default function UsuariosPage() {
   };
   useEffect(() => { load(); }, []);
 
+  // Abre el modal de creación asegurando un departamento válido por defecto
+  // (el Select mostraba el primero pero el estado seguía en "" → fallo de validación).
+  const openCreate = () => {
+    setForm({ name: "", email: "", role: "EMPLOYEE", department: departments[0]?.key ?? "" });
+    setCreateError("");
+    setCreateOpen(true);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError("");
@@ -75,13 +83,13 @@ export default function UsuariosPage() {
     });
     setCreating(false);
     if (!res.ok) {
-      const d = await res.json();
-      setCreateError(d.error ?? "Error al crear usuario");
+      const d = await res.json().catch(() => ({}));
+      setCreateError(typeof d.error === "string" ? d.error : "Error al crear usuario");
       return;
     }
     const data = await res.json();
     setCreateOpen(false);
-    setForm({ name: "", email: "", role: "EMPLOYEE", department: "IT" });
+    setForm({ name: "", email: "", role: "EMPLOYEE", department: departments[0]?.key ?? "" });
     load();
     // Mostrar contraseña generada
     setPasswordModal({ name: data.name, password: data.generatedPassword });
@@ -100,8 +108,8 @@ export default function UsuariosPage() {
     });
     setResetting(false);
     if (!res.ok) {
-      const d = await res.json();
-      setResetError(d.error ?? "Error al resetear");
+      const d = await res.json().catch(() => ({}));
+      setResetError(typeof d.error === "string" ? d.error : "Error al resetear");
       return;
     }
     const data = await res.json();
@@ -128,7 +136,7 @@ export default function UsuariosPage() {
     <AppLayout title="Gestión de usuarios">
       <div className="space-y-4">
         <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={openCreate}>
             <PlusIcon className="mr-1 h-4 w-4" />Nuevo usuario
           </Button>
         </div>

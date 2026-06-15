@@ -59,7 +59,18 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const missing: string[] = [];
+    if (fieldErrors.name) missing.push("nombre (mínimo 2 caracteres)");
+    if (fieldErrors.email) missing.push("email válido");
+    if (fieldErrors.department) missing.push("departamento");
+    if (fieldErrors.role) missing.push("rol");
+    const error = missing.length
+      ? `Revisa estos campos: ${missing.join(", ")}.`
+      : "Datos inválidos.";
+    return NextResponse.json({ error }, { status: 400 });
+  }
 
   const { name, email, role, department } = parsed.data;
 

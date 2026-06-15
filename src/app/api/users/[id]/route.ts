@@ -37,7 +37,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const body = await req.json();
   const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) {
+    const msg = Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Datos inválidos";
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
 
   const { resetPassword, newPassword, ...rest } = parsed.data;
 
