@@ -39,24 +39,44 @@ export function TicketChatbot({ onProceed }: { onProceed: () => void }) {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput("");
+    // Historial para que el asistente mantenga el contexto de la conversación
+    const history = msgs
+      .filter((m) => m.text)
+      .map((m) => ({ role: m.role, text: m.text as string }));
     setMsgs((p) => [...p, { role: "user", text: userMsg }]);
     setLoading(true);
 
-    const res  = await fetch("/api/chatbot", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMsg }),
-    });
-    const data = await res.json();
+    let data: {
+      reply?: string | null;
+      answer?: { id?: string; question: string; answer: string } | null;
+      faqs?: FaqResult[];
+    } = {};
+    try {
+      const res = await fetch("/api/chatbot", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg, history }),
+      });
+      data = await res.json();
+    } catch {
+      data = {};
+    }
     setLoading(false);
 
-    if (data.answer) {
+    if (data.reply) {
+      // Respuesta conversacional del asistente IA (+ FAQ relacionadas)
+      setMsgs((p) => [...p, {
+        role: "bot",
+        text: data.reply as string,
+        faqs: data.faqs && data.faqs.length > 0 ? data.faqs : undefined,
+      }]);
+    } else if (data.answer) {
       setMsgs((p) => [...p, {
         role: "bot",
         text: "He encontrado una respuesta que podría ayudarte:",
         directAnswer: data.answer,
         faqs: data.faqs?.filter((f: FaqResult) => f.id !== data.answer?.id),
       }]);
-    } else if (data.faqs?.length > 0) {
+    } else if (data.faqs && data.faqs.length > 0) {
       setMsgs((p) => [...p, {
         role: "bot",
         text: "No tengo una respuesta exacta, pero esto podría ser útil:",
