@@ -72,10 +72,12 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   const order = await prisma.metalOrder.findUnique({ where: { id } });
   if (!order) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  if (!isAdmin(session.user) && order.createdById !== session.user.id) {
+  const admin = isAdmin(session.user);
+  if (!admin && order.createdById !== session.user.id) {
     return NextResponse.json({ error: "Sin permisos" }, { status: 403 });
   }
-  if (order.status !== "BORRADOR") {
+  // Los admins pueden eliminar cualquier pedido; el creador solo sus borradores.
+  if (!admin && order.status !== "BORRADOR") {
     return NextResponse.json({ error: "Solo se pueden eliminar borradores" }, { status: 400 });
   }
 

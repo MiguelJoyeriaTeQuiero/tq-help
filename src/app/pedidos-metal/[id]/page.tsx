@@ -14,6 +14,7 @@ import {
 } from "@/lib/metal-families";
 import { getDeptLabel } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DeleteButton } from "@/components/ui/delete-button";
 import { toast } from "@/components/ui/toast";
 import { useTopProgress } from "@/components/ui/top-progress";
 import {
@@ -253,7 +254,19 @@ export default function PedidoMetalDetailPage({ params }: { params: Promise<{ id
                     <XMarkIcon className="h-4 w-4" /> Cancelar pedido
                   </Button>
                 )}
-                {order.status === "BORRADOR" && isOwner && (
+                {/* Admins: pueden eliminar cualquier pedido (cualquier estado) */}
+                {admin && (
+                  <DeleteButton
+                    endpoint={`/api/metal-orders/${id}`}
+                    resourceLabel="este pedido de material y sus artículos"
+                    confirmTitle="Eliminar pedido"
+                    successMessage="Pedido eliminado"
+                    redirectTo="/pedidos-metal"
+                    label="Eliminar pedido"
+                  />
+                )}
+                {/* Creador no-admin: solo puede eliminar sus borradores */}
+                {!admin && order.status === "BORRADOR" && isOwner && (
                   <button
                     onClick={deleteOrder}
                     className="text-xs text-slate-400 hover:text-red-500 transition-colors text-right"

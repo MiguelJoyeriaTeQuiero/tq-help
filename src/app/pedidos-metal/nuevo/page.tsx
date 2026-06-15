@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
 import { METAL_FAMILY_LABELS, MATERIAL_CATALOG } from "@/lib/metal-families";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { MetalFamily } from "@prisma/client";
 
 const TABS = Object.keys(METAL_FAMILY_LABELS) as MetalFamily[];
+const PAGE_SIZE_OPTIONS: (number | "all")[] = [10, 20, 50, "all"];
 
 type Quantities = Record<string, number>;
 
@@ -25,6 +27,8 @@ export default function NuevoPedidoMetalPage() {
   const [search, setSearch]       = useState("");
   const [saving, setSaving]       = useState<"draft" | "send" | null>(null);
   const [error, setError]         = useState("");
+  const [pageSize, setPageSize]   = useState<number | "all">(10);
+  const [page, setPage]           = useState(1);
 
   const setQty = (family: MetalFamily, article: string, raw: string) => {
     const val = raw === "" ? 0 : Math.max(0, Math.floor(Number(raw)));
@@ -63,6 +67,16 @@ export default function NuevoPedidoMetalPage() {
     if (!q) return MATERIAL_CATALOG[activeTab];
     return MATERIAL_CATALOG[activeTab].filter((a) => normalize(a).includes(q));
   }, [activeTab, search]);
+
+  // Paginación de la lista de artículos (solo afecta a la visualización;
+  // las cantidades seleccionadas se conservan globalmente en `quantities`).
+  const effectivePageSize = pageSize === "all" ? Math.max(filteredArticles.length, 1) : pageSize;
+  const totalPages  = Math.max(1, Math.ceil(filteredArticles.length / effectivePageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleArticles = filteredArticles.slice(
+    (currentPage - 1) * effectivePageSize,
+    currentPage * effectivePageSize,
+  );
 
   const submit = async (send: boolean) => {
     setError("");
@@ -121,7 +135,7 @@ export default function NuevoPedidoMetalPage() {
               return (
                 <button
                   key={tab}
-                  onClick={() => { setActiveTab(tab); setSearch(""); }}
+                  onClick={() => { setActiveTab(tab); setSearch(""); setPage(1); }}
                   className={`flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                     activeTab === tab
                       ? "border-indigo-500 text-indigo-600"
@@ -146,10 +160,27 @@ export default function NuevoPedidoMetalPage() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder={`Buscar en ${METAL_FAMILY_LABELS[activeTab]}…`}
                 className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
+            </div>
+            {/* Selector de cuántos artículos mostrar */}
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              <span className="text-slate-400">Mostrar:</span>
+              {PAGE_SIZE_OPTIONS.map((opt) => (
+                <button
+                  key={String(opt)}
+                  onClick={() => { setPageSize(opt); setPage(1); }}
+                  className={`px-2.5 py-1 rounded-md font-medium transition-colors border ${
+                    pageSize === opt
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                  }`}
+                >
+                  {opt === "all" ? "Todos" : opt}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -161,7 +192,7 @@ export default function NuevoPedidoMetalPage() {
                   Sin resultados para &ldquo;{search}&rdquo;
                 </p>
               ) : (
-                filteredArticles.map((article) => {
+                visibleArticles.map((article) => {
                   const qty = getQty(activeTab, article);
                   return (
                     <div
@@ -205,6 +236,18 @@ export default function NuevoPedidoMetalPage() {
                 })
               )}
             </div>
+
+            {/* Paginación */}
+            {pageSize !== "all" && filteredArticles.length > 0 && (
+              <div className="px-5 py-3">
+                <Pagination
+                  page={currentPage}
+                  total={filteredArticles.length}
+                  pageSize={effectivePageSize}
+                  onChange={setPage}
+                />
+              </div>
+            )}
 
             {/* Footer resumen */}
             <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-sm text-slate-500">
