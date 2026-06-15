@@ -7,6 +7,7 @@ import { es } from "date-fns/locale";
 import { LockClosedIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { DeleteButton } from "@/components/ui/delete-button";
 
 interface Comment {
   id: string;
@@ -123,6 +124,16 @@ export function LiveComments({ ticketId, isAdmin, onComment }: Props) {
               <span className="ml-auto text-[10px] text-slate-400">
                 {format(new Date(c.createdAt), "dd/MM HH:mm", { locale: es })}
               </span>
+              <DeleteButton
+                endpoint={`/api/tickets/${ticketId}/comments/${c.id}`}
+                resourceLabel="este comentario"
+                confirmTitle="Eliminar comentario"
+                successMessage="Comentario eliminado"
+                onDeleted={() => {
+                  seenIds.delete(c.id);
+                  setComments((prev) => prev.filter((x) => x.id !== c.id));
+                }}
+              />
             </div>
             <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">
               {renderWithMentions(c.content)}

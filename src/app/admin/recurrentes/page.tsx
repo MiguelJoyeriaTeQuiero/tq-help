@@ -204,7 +204,7 @@ export default function RecurrentesPage() {
                     <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
                       <PencilIcon className="h-3.5 w-3.5" />
                     </Button>
-                    {session?.user?.role === "SUPERADMIN" && (
+                    {(session?.user?.role === "SUPERADMIN" || session?.user?.role === "DEPT_ADMIN") && (
                       <Button size="sm" variant="danger" onClick={() => handleDelete(item.id)}>
                         <TrashIcon className="h-3.5 w-3.5" />
                       </Button>

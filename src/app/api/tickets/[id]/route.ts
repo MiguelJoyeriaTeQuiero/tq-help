@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendTicketUpdateEmail } from "@/lib/mail";
 import { TICKET_STATUS_LABELS } from "@/lib/utils";
 import { isSlaBreached } from "@/lib/sla";
-import { canManageTickets } from "@/lib/permissions";
+import { canManageTickets, isAdmin } from "@/lib/permissions";
 import { evaluateRules } from "@/lib/rules-engine";
 import { sendPushToUser } from "@/lib/push";
 import { z } from "zod";
@@ -202,4 +202,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   return NextResponse.json(updated);
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+  // Cualquier admin (DEPT_ADMIN o SUPERADMIN) puede eliminar, sin límite de departamento.
+  if (!isAdmin(session.user)) {
+    return NextResponse.json({ error: "Sin permisos" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  const ticket = await prisma.ticket.findUnique({ where: { id }, select: { id: true, title: true } });
+  if (!ticket) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+  // Las relaciones hijas (comentarios, adjuntos, historial, etc.) se borran en cascada (onDelete: Cascade).
+  await prisma.ticket.delete({ where: { id } });
+
+  return NextResponse.json({ ok: true });
 }

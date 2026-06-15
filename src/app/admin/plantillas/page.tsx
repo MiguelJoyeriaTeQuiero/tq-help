@@ -168,7 +168,7 @@ export default function PlantillasPage() {
                     <Button size="sm" variant="outline" onClick={() => openEdit(t)}>
                       <PencilIcon className="h-3.5 w-3.5" />
                     </Button>
-                    {session?.user?.role === "SUPERADMIN" && (
+                    {canManage && (
                       <Button size="sm" variant="danger" onClick={() => handleDelete(t.id, t.name)}>
                         <TrashIcon className="h-3.5 w-3.5" />
                       </Button>

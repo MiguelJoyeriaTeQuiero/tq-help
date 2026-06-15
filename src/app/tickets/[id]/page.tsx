@@ -24,6 +24,7 @@ import { TicketRelationsPanel } from "@/components/tickets/ticket-relations-pane
 import { MergeTicketModal } from "@/components/tickets/merge-ticket-modal";
 import { StarRating } from "@/components/ui/star-rating";
 import { LiveComments } from "@/components/tickets/live-comments";
+import { DeleteButton } from "@/components/ui/delete-button";
 
 function renderWithMentions(text: string) {
   const parts = text.split(/(@\w+)/g);
@@ -211,6 +212,14 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                 {tt.tag.name}
               </Badge>
             ))}
+            <DeleteButton
+              endpoint={`/api/tickets/${id}`}
+              resourceLabel="esta incidencia y todos sus comentarios"
+              confirmTitle="Eliminar incidencia"
+              successMessage="Incidencia eliminada"
+              redirectTo="/tickets"
+              label="Eliminar"
+            />
           </div>
         </div>
 

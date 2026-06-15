@@ -16,6 +16,7 @@ import { es } from "date-fns/locale";
 import { HandThumbUpIcon, LockClosedIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { HandThumbUpIcon as HandThumbUpSolid } from "@heroicons/react/24/solid";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DeleteButton } from "@/components/ui/delete-button";
 
 const STATUS_OPTIONS = [
   { value: "PENDIENTE", label: "Pendiente" },
@@ -150,6 +151,14 @@ export default function PeticionDetailPage({ params }: { params: Promise<{ id: s
               <span className="font-bold text-slate-700">{feature.voteCount}</span>
             </button>
             <FeatureStatusBadge status={feature.status} />
+            <DeleteButton
+              endpoint={`/api/features/${id}`}
+              resourceLabel="esta petición, sus votos y comentarios"
+              confirmTitle="Eliminar petición"
+              successMessage="Petición eliminada"
+              redirectTo="/peticiones"
+              label="Eliminar"
+            />
           </div>
         </div>
 
@@ -189,6 +198,13 @@ export default function PeticionDetailPage({ params }: { params: Promise<{ id: s
                         <span className="text-sm font-medium text-slate-800">{c.author.name}</span>
                         {c.isInternal && <span className="flex items-center gap-1 text-xs text-yellow-700"><LockClosedIcon className="h-3 w-3" /> Interno</span>}
                         <span className="ml-auto text-xs text-slate-400">{format(new Date(c.createdAt), "dd/MM HH:mm")}</span>
+                        <DeleteButton
+                          endpoint={`/api/features/${id}/comments/${c.id}`}
+                          resourceLabel="este comentario"
+                          confirmTitle="Eliminar comentario"
+                          successMessage="Comentario eliminado"
+                          onDeleted={load}
+                        />
                       </div>
                       <p className="text-sm text-slate-700 whitespace-pre-wrap">{c.content}</p>
                     </div>

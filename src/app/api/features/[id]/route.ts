@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canManageTickets } from "@/lib/permissions";
+import { canManageTickets, isAdmin } from "@/lib/permissions";
 import { sendFeatureUpdateEmail } from "@/lib/mail";
 import { FEATURE_STATUS_LABELS } from "@/lib/utils";
 import { z } from "zod";
@@ -122,4 +122,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   return NextResponse.json(updated);
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+  // Cualquier admin (DEPT_ADMIN o SUPERADMIN) puede eliminar, sin límite de departamento.
+  if (!isAdmin(session.user)) {
+    return NextResponse.json({ error: "Sin permisos" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  const feature = await prisma.featureRequest.findUnique({ where: { id }, select: { id: true } });
+  if (!feature) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+  // Votos, comentarios, etiquetas, adjuntos e historial se borran en cascada (onDelete: Cascade).
+  await prisma.featureRequest.delete({ where: { id } });
+
+  return NextResponse.json({ ok: true });
 }
