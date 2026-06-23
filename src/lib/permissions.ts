@@ -32,7 +32,11 @@ export function isSuperAdmin(user: SessionUser): boolean {
   return user.role === "SUPERADMIN";
 }
 
+// Claves del departamento de logística que dan acceso al almacén.
+// Incluye la clave real de la BD ("LOGSTICA", con errata histórica) y la variante correcta.
+export const WAREHOUSE_DEPARTMENTS = ["LOGSTICA", "LOGISTICA"];
+
 // Gestión de almacén: superadmins y cualquier usuario del departamento de logística
 export function canManageWarehouse(user: SessionUser): boolean {
-  return user.role === "SUPERADMIN" || user.department === "LOGISTICA";
+  return user.role === "SUPERADMIN" || WAREHOUSE_DEPARTMENTS.includes(user.department);
 }

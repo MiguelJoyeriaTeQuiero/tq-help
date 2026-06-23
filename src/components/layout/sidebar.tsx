@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn, getDeptLabel, ROLE_LABELS } from "@/lib/utils";
+import { WAREHOUSE_DEPARTMENTS } from "@/lib/permissions";
 import { Logo } from "@/components/ui/logo";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
@@ -44,7 +45,7 @@ const navItems: NavItem[] = [
   { href: "/activos",              label: "Activos (ITAM)",     icon: ComputerDesktopIcon,     roles: ["SUPERADMIN", "DEPT_ADMIN"] },
   { href: "/faq",                  label: "FAQ",                icon: QuestionMarkCircleIcon,  roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
   { href: "/pedidos-metal",        label: "Pedidos material",   icon: CubeIcon,                roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE"] },
-  { href: "/almacen",              label: "Almacén",            icon: BuildingStorefrontIcon,  roles: ["SUPERADMIN"], departments: ["LOGISTICA"] },
+  { href: "/almacen",              label: "Almacén",            icon: BuildingStorefrontIcon,  roles: ["SUPERADMIN"], departments: WAREHOUSE_DEPARTMENTS },
   { href: "/admin",                label: "Panel admin",        icon: ChartBarIcon,            roles: ["SUPERADMIN", "DEPT_ADMIN", "VIEWER"], exact: true },
   { href: "/admin/usuarios",       label: "Usuarios",           icon: UsersIcon,               roles: ["SUPERADMIN"] },
   { href: "/admin/plantillas",     label: "Plantillas",         icon: DocumentDuplicateIcon,   roles: ["SUPERADMIN", "DEPT_ADMIN"] },
