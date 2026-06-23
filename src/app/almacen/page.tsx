@@ -77,7 +77,7 @@ export default function AlmacenPage() {
   const { data: session, status } = useSession();
   const allowed = session?.user ? canManageWarehouse(session.user) : false;
 
-  const [view, setView] = useState<"inventory" | "replenishment">("inventory");
+  const [view, setView] = useState<"inventory" | "replenishment" | "count">("inventory");
 
   // Inventario
   const [products, setProducts] = useState<Product[]>([]);
@@ -233,6 +233,12 @@ export default function AlmacenPage() {
                 </span>
               )}
             </button>
+            <button
+              onClick={() => setView("count")}
+              className={`rounded-md px-4 py-1.5 font-medium transition-colors ${view === "count" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+            >
+              Recuento
+            </button>
           </div>
           {view === "inventory" && (
             <Button onClick={() => setCreating(true)} className="gap-2">
@@ -372,7 +378,7 @@ export default function AlmacenPage() {
               )}
             </CardContent>
           </Card>
-        ) : (
+        ) : view === "replenishment" ? (
           <ReplenishmentView
             loading={replLoading || !replLoaded}
             inCampaign={inCampaign}
@@ -382,6 +388,13 @@ export default function AlmacenPage() {
             onStock={(it) => setStockFor(replItemToProduct(it))}
             onAdjust={(it) => setEditing(replItemToProduct(it))}
             onRequested={setRequested}
+            onLightbox={setLightbox}
+          />
+        ) : (
+          <CountView
+            loading={loading}
+            products={products.filter((p) => p.active)}
+            onApplied={reload}
             onLightbox={setLightbox}
           />
         )}
@@ -854,5 +867,225 @@ function StockModal({
         </div>
       </div>
     </Modal>
+  );
+}
+
+// ── Vista de Recuento físico ─────────────────────────────────────────────────
+
+const COUNT_STORAGE_KEY = "almacen-recuento-v1";
+
+function csvCell(v: string | number): string {
+  const s = String(v ?? "");
+  return /[";\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function CountView({
+  loading,
+  products,
+  onApplied,
+  onLightbox,
+}: {
+  loading: boolean;
+  products: Product[];
+  onApplied: () => void;
+  onLightbox: (img: { url: string; filename: string }) => void;
+}) {
+  const [counts, setCounts] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem(COUNT_STORAGE_KEY) || "{}"); } catch { return {}; }
+  });
+  const [search, setSearch] = useState("");
+  const [familyTab, setFamilyTab] = useState<(typeof FAMILY_TABS)[number]>("ALL");
+  const [applying, setApplying] = useState(false);
+
+  useEffect(() => {
+    try { localStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts)); } catch { /* almacenamiento lleno */ }
+  }, [counts]);
+
+  const setCount = (id: string, raw: string) =>
+    setCounts((prev) => {
+      if (raw === "") { const next = { ...prev }; delete next[id]; return next; }
+      const val = Math.max(0, Math.floor(Number(raw)));
+      return { ...prev, [id]: String(val) };
+    });
+
+  const filtered = useMemo(() => {
+    const q = normalize(search.trim());
+    return products.filter((p) => {
+      if (familyTab !== "ALL" && p.family !== familyTab) return false;
+      if (q && !normalize(p.name).includes(q)) return false;
+      return true;
+    });
+  }, [products, search, familyTab]);
+
+  const countedEntries = useMemo(
+    () => products.filter((p) => counts[p.id] !== undefined && counts[p.id] !== ""),
+    [products, counts],
+  );
+  const withDiff = countedEntries.filter((p) => Number(counts[p.id]) !== p.stock).length;
+
+  const exportCsv = () => {
+    const header = ["Familia", "Producto", "Proveedor", "Stock sistema", "Contado", "Diferencia"];
+    const rows = filtered.map((p) => {
+      const raw = counts[p.id];
+      const counted = raw !== undefined && raw !== "" ? Number(raw) : "";
+      const diff = counted === "" ? "" : Number(counted) - p.stock;
+      return [METAL_FAMILY_LABELS[p.family], p.name, p.supplier ?? "", p.stock, counted, diff];
+    });
+    const csv = "﻿" + [header, ...rows].map((r) => r.map(csvCell).join(";")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `recuento-almacen-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const applyAdjustments = async () => {
+    if (countedEntries.length === 0) return;
+    if (!confirm(`Vas a fijar el stock de ${countedEntries.length} producto${countedEntries.length !== 1 ? "s" : ""} a su valor contado. ¿Continuar?`)) return;
+    setApplying(true);
+    const items = countedEntries.map((p) => ({ id: p.id, counted: Number(counts[p.id]) }));
+    const res = await fetch("/api/products/stock-adjust", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
+    const data = await res.json();
+    setApplying(false);
+    if (!res.ok) { toast.error(data.error ?? "Error al aplicar los ajustes"); return; }
+    toast.success(`${data.updated} producto${data.updated !== 1 ? "s" : ""} ajustado${data.updated !== 1 ? "s" : ""}`);
+    setCounts({});
+    onApplied();
+  };
+
+  const clearCounts = () => {
+    if (countedEntries.length > 0 && !confirm("¿Borrar todas las cantidades contadas?")) return;
+    setCounts({});
+  };
+
+  return (
+    <Card>
+      {/* Tabs por familia */}
+      <div className="flex border-b border-slate-200 overflow-x-auto">
+        {FAMILY_TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setFamilyTab(tab)}
+            className={`px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              familyTab === tab ? "border-indigo-500 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {tab === "ALL" ? "Todos" : METAL_FAMILY_LABELS[tab]}
+          </button>
+        ))}
+      </div>
+
+      {/* Buscador + acciones */}
+      <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[180px]">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar producto…"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        <Button variant="outline" onClick={exportCsv} className="gap-1.5">
+          <ArrowDownTrayIcon className="h-4 w-4" /> Exportar a Excel
+        </Button>
+        <Button onClick={applyAdjustments} loading={applying} disabled={countedEntries.length === 0} className="gap-1.5">
+          <CheckCircleIcon className="h-4 w-4" /> Aplicar ajustes
+        </Button>
+      </div>
+
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="p-5 space-y-3">
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="px-5 py-10 text-sm text-slate-400 text-center">No hay productos.</p>
+        ) : (
+          <>
+            {/* Cabecera tabla */}
+            <div className="hidden sm:grid grid-cols-[1fr_90px_110px_90px] gap-3 px-5 py-2 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <span>Producto</span>
+              <span className="text-center">Sistema</span>
+              <span className="text-center">Contado</span>
+              <span className="text-center">Diferencia</span>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {filtered.map((p) => {
+                const raw = counts[p.id];
+                const hasCount = raw !== undefined && raw !== "";
+                const diff = hasCount ? Number(raw) - p.stock : null;
+                return (
+                  <div key={p.id} className="grid grid-cols-[1fr_90px_110px_90px] gap-3 px-5 py-2.5 items-center">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {p.imageUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => onLightbox({ url: p.imageUrl!, filename: p.name })}
+                          className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
+                          title="Ampliar foto"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                        </button>
+                      ) : (
+                        <div className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
+                          <PhotoIcon className="h-4 w-4 text-slate-300" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">{p.name}</p>
+                        <p className="text-xs text-slate-400">{METAL_FAMILY_LABELS[p.family]}</p>
+                      </div>
+                    </div>
+
+                    <span className="text-sm text-center text-slate-600 font-medium">{p.stock}</span>
+
+                    <input
+                      type="number"
+                      min={0}
+                      value={raw ?? ""}
+                      onChange={(e) => setCount(p.id, e.target.value)}
+                      placeholder="—"
+                      className={`w-full rounded-md border text-center text-sm py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                        hasCount ? "border-indigo-300 bg-white text-indigo-700 font-semibold" : "border-slate-200 bg-white text-slate-500"
+                      }`}
+                    />
+
+                    <span className={`text-sm text-center font-semibold ${
+                      diff === null ? "text-slate-300" : diff === 0 ? "text-slate-400" : diff > 0 ? "text-emerald-600" : "text-red-600"
+                    }`}>
+                      {diff === null ? "—" : diff > 0 ? `+${diff}` : diff}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 flex-wrap text-sm">
+          <span className="text-slate-500">
+            {countedEntries.length > 0
+              ? <><span className="font-medium text-indigo-600">{countedEntries.length} contado{countedEntries.length !== 1 ? "s" : ""}</span>{withDiff > 0 && <span className="text-slate-400"> · {withDiff} con diferencia</span>}</>
+              : "Introduce las cantidades contadas. Se guardan en este dispositivo hasta que las apliques."}
+          </span>
+          {countedEntries.length > 0 && (
+            <button onClick={clearCounts} className="text-xs text-slate-400 hover:text-red-500 transition-colors">
+              Limpiar recuento
+            </button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
