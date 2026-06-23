@@ -246,6 +246,11 @@ export default function NuevoPedidoMetalPage() {
                           <span className={`ml-2 text-xs ${product.stock <= 0 ? "text-red-500" : "text-slate-400"}`}>
                             {product.stock <= 0 ? "sin stock" : `${product.stock} en stock`}
                           </span>
+                          {qty > product.stock && (
+                            <span className="ml-2 text-xs font-medium text-amber-600">
+                              ⚠ supera el stock disponible
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button

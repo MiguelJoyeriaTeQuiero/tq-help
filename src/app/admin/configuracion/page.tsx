@@ -58,6 +58,7 @@ export default function ConfiguracionPage() {
         <DepartmentsSection />
         <TagsSection />
         <SlaSection />
+        <ReplenishmentSection />
       </div>
     </AppLayout>
   );
@@ -562,6 +563,148 @@ function DepartmentsSection() {
           </div>
         </form>
       </Modal>
+    </Card>
+  );
+}
+
+// ── Sección de Reposición de stock ─────────────────────────────────────────
+
+const MONTH_LABELS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+interface ReplCfg {
+  safetyFactor: number;
+  cycleDays: number;
+  windowMonths: number;
+  minCycles: number;
+  defaultLeadDays: number;
+  campaignMultiplier: number;
+  campaignMonths: number[];
+}
+
+function ReplenishmentSection() {
+  const [cfg, setCfg] = useState<ReplCfg | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/replenishment-config")
+      .then((r) => r.json())
+      .then((d) => { if (d && typeof d === "object") setCfg(d); })
+      .catch(() => {});
+  }, []);
+
+  const update = (patch: Partial<ReplCfg>) => setCfg((c) => (c ? { ...c, ...patch } : c));
+
+  const toggleMonth = (m: number) =>
+    setCfg((c) => {
+      if (!c) return c;
+      const has = c.campaignMonths.includes(m);
+      return { ...c, campaignMonths: has ? c.campaignMonths.filter((x) => x !== m) : [...c.campaignMonths, m].sort((a, b) => a - b) };
+    });
+
+  const save = async () => {
+    if (!cfg) return;
+    setSaving(true);
+    setError("");
+    const res = await fetch("/api/replenishment-config", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cfg),
+    });
+    setSaving(false);
+    if (!res.ok) { setError("No se pudo guardar la configuración"); return; }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Reposición de stock</CardTitle>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Parámetros del cálculo automático de puntos de pedido y cantidades sugeridas en Almacén.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {!cfg ? (
+          <p className="text-sm text-slate-400">Cargando…</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Input
+                label="Colchón de seguridad (%)"
+                type="number" min={0}
+                value={String(Math.round(cfg.safetyFactor * 100))}
+                onChange={(e) => update({ safetyFactor: Math.max(0, Number(e.target.value) || 0) / 100 })}
+              />
+              <Input
+                label="Plazo entrega por defecto (días)"
+                type="number" min={0}
+                value={String(cfg.defaultLeadDays)}
+                onChange={(e) => update({ defaultLeadDays: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+              />
+              <Input
+                label="Duración del ciclo (días)"
+                type="number" min={1}
+                value={String(cfg.cycleDays)}
+                onChange={(e) => update({ cycleDays: Math.max(1, Math.floor(Number(e.target.value) || 1)) })}
+              />
+              <Input
+                label="Ventana de histórico (meses)"
+                type="number" min={1}
+                value={String(cfg.windowMonths)}
+                onChange={(e) => update({ windowMonths: Math.max(1, Math.floor(Number(e.target.value) || 1)) })}
+              />
+              <Input
+                label="Ciclos mínimos para calcular"
+                type="number" min={1}
+                value={String(cfg.minCycles)}
+                onChange={(e) => update({ minCycles: Math.max(1, Math.floor(Number(e.target.value) || 1)) })}
+              />
+              <Input
+                label="Multiplicador de campaña"
+                type="number" min={1} step={0.1}
+                value={String(cfg.campaignMultiplier)}
+                onChange={(e) => update({ campaignMultiplier: Math.max(1, Number(e.target.value) || 1) })}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">Meses de campaña</label>
+              <p className="text-xs text-slate-400 mb-2">Durante estos meses se aplica el multiplicador a la demanda estimada.</p>
+              <div className="flex flex-wrap gap-1.5">
+                {MONTH_LABELS.map((label, i) => {
+                  const m = i + 1;
+                  const active = cfg.campaignMonths.includes(m);
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => toggleMonth(m)}
+                      className={`px-2.5 py-1 rounded-md text-sm font-medium border transition-colors ${
+                        active
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-purple-300"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+
+            <div className="flex justify-end">
+              <Button onClick={save} loading={saving} variant={saved ? "secondary" : "primary"} className="w-32">
+                {saved ? (<><CheckIcon className="mr-1 h-3.5 w-3.5 text-green-600" />Guardado</>) : "Guardar"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }

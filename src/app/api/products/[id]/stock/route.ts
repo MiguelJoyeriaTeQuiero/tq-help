@@ -31,9 +31,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Indica 'delta' o 'set'" }, { status: 400 });
   }
 
+  // Si se recibe mercancía (sube el stock), se da por servido el pedido al proveedor
+  // y se reactiva el seguimiento del aviso de reposición.
+  const stockIncreased = nextStock > product.stock;
+
   const updated = await prisma.product.update({
     where: { id },
-    data: { stock: nextStock },
+    data: {
+      stock: nextStock,
+      ...(stockIncreased && product.replenishmentRequested ? { replenishmentRequested: false } : {}),
+    },
   });
 
   return NextResponse.json(updated);

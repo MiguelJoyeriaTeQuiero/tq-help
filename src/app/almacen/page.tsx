@@ -19,6 +19,10 @@ import {
   MagnifyingGlassIcon,
   PhotoIcon,
   ArrowDownTrayIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  TruckIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import type { MetalFamily } from "@prisma/client";
 
@@ -29,6 +33,31 @@ interface Product {
   imageUrl: string | null;
   stock: number;
   active: boolean;
+  supplier: string | null;
+  leadTimeDays: number | null;
+  reorderPointOverride: number | null;
+  replenishmentRequested: boolean;
+}
+
+interface ReplItem {
+  id: string;
+  name: string;
+  family: MetalFamily;
+  imageUrl: string | null;
+  stock: number;
+  supplier: string | null;
+  leadTimeDays: number | null;
+  reorderPointOverride: number | null;
+  replenishmentRequested: boolean;
+  reorderPoint: number;
+  targetStock: number;
+  suggestedQty: number;
+  perCycleDemand: number;
+  enoughHistory: boolean;
+  needsReorder: boolean;
+  usingOverride: boolean;
+  leadDays: number;
+  demand: { totalDemand: number; orderCount: number; firstOrderAt: string | null };
 }
 
 const FAMILY_TABS = ["ALL", ...(Object.keys(METAL_FAMILY_LABELS) as MetalFamily[])] as const;
@@ -36,27 +65,58 @@ const FAMILY_TABS = ["ALL", ...(Object.keys(METAL_FAMILY_LABELS) as MetalFamily[
 const normalize = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
+function replItemToProduct(it: ReplItem): Product {
+  return {
+    id: it.id, name: it.name, family: it.family, imageUrl: it.imageUrl, stock: it.stock,
+    active: true, supplier: it.supplier, leadTimeDays: it.leadTimeDays,
+    reorderPointOverride: it.reorderPointOverride, replenishmentRequested: it.replenishmentRequested,
+  };
+}
+
 export default function AlmacenPage() {
   const { data: session, status } = useSession();
   const allowed = session?.user ? canManageWarehouse(session.user) : false;
 
+  const [view, setView] = useState<"inventory" | "replenishment">("inventory");
+
+  // Inventario
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState("");
   const [familyTab, setFamilyTab] = useState<(typeof FAMILY_TABS)[number]>("ALL");
+
+  // Reposición
+  const [repl, setRepl]         = useState<ReplItem[]>([]);
+  const [inCampaign, setInCampaign] = useState(false);
+  const [replLoading, setReplLoading] = useState(false);
+  const [replLoaded, setReplLoaded]   = useState(false);
 
   const [editing, setEditing]   = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [stockFor, setStockFor] = useState<Product | null>(null);
   const [lightbox, setLightbox] = useState<{ url: string; filename: string } | null>(null);
 
-  const load = () => {
+  const loadInventory = () => {
     setLoading(true);
     fetch("/api/products?all=true")
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d)) setProducts(d); })
       .finally(() => setLoading(false));
   };
+
+  const loadReplenishment = () => {
+    setReplLoading(true);
+    fetch("/api/products/replenishment")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d?.products)) setRepl(d.products);
+        setInCampaign(!!d?.inCampaign);
+        setReplLoaded(true);
+      })
+      .finally(() => setReplLoading(false));
+  };
+
+  const reload = () => { loadInventory(); if (replLoaded) loadReplenishment(); };
 
   useEffect(() => {
     if (!allowed) return;
@@ -67,6 +127,22 @@ export default function AlmacenPage() {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [allowed]);
+
+  // Cargar reposición la primera vez que se entra en esa vista
+  useEffect(() => {
+    if (!allowed || view !== "replenishment" || replLoaded) return;
+    let active = true;
+    fetch("/api/products/replenishment")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!active) return;
+        if (Array.isArray(d?.products)) setRepl(d.products);
+        setInCampaign(!!d?.inCampaign);
+        setReplLoaded(true);
+      })
+      .finally(() => { if (active) setReplLoading(false); });
+    return () => { active = false; };
+  }, [allowed, view, replLoaded]);
 
   const filtered = useMemo(() => {
     const q = normalize(search.trim());
@@ -80,6 +156,10 @@ export default function AlmacenPage() {
   const countForFamily = (fam: (typeof FAMILY_TABS)[number]) =>
     fam === "ALL" ? products.length : products.filter((p) => p.family === fam).length;
 
+  const alerts        = useMemo(() => repl.filter((r) => r.needsReorder).sort((a, b) => b.suggestedQty - a.suggestedQty), [repl]);
+  const inProgress    = useMemo(() => repl.filter((r) => r.replenishmentRequested), [repl]);
+  const noHistory     = useMemo(() => repl.filter((r) => !r.enoughHistory && !r.usingOverride).length, [repl]);
+
   const deleteProduct = async (p: Product) => {
     if (!confirm(`¿Eliminar "${p.name}"? Si tiene pedidos asociados, se desactivará en su lugar.`)) return;
     const res = await fetch(`/api/products/${p.id}`, { method: "DELETE" });
@@ -87,7 +167,7 @@ export default function AlmacenPage() {
     if (!res.ok) { toast.error(data.error ?? "No se pudo eliminar"); return; }
     if (data.deactivated) toast.success("Producto desactivado (tiene pedidos asociados)");
     else toast.success("Producto eliminado");
-    load();
+    reload();
   };
 
   const toggleActive = async (p: Product) => {
@@ -96,8 +176,20 @@ export default function AlmacenPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: !p.active }),
     });
-    if (res.ok) { toast.success(p.active ? "Producto desactivado" : "Producto activado"); load(); }
+    if (res.ok) { toast.success(p.active ? "Producto desactivado" : "Producto activado"); reload(); }
     else toast.error("No se pudo actualizar");
+  };
+
+  const setRequested = async (it: ReplItem, value: boolean) => {
+    const res = await fetch(`/api/products/${it.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ replenishmentRequested: value }),
+    });
+    if (res.ok) {
+      toast.success(value ? "Marcado como pedido al proveedor" : "Aviso reactivado");
+      loadReplenishment();
+    } else toast.error("No se pudo actualizar");
   };
 
   if (status === "loading") {
@@ -121,153 +213,185 @@ export default function AlmacenPage() {
   return (
     <AppLayout title="Almacén">
       <div className="max-w-5xl space-y-5">
-        {/* Cabecera */}
+        {/* Selector de vista + acción */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-sm text-slate-500">
-            Gestiona los productos del catálogo de pedidos: alta, foto y stock.
-          </p>
-          <Button onClick={() => setCreating(true)} className="gap-2">
-            <PlusIcon className="h-4 w-4" /> Nuevo producto
-          </Button>
+          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-sm">
+            <button
+              onClick={() => setView("inventory")}
+              className={`rounded-md px-4 py-1.5 font-medium transition-colors ${view === "inventory" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+            >
+              Inventario
+            </button>
+            <button
+              onClick={() => setView("replenishment")}
+              className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 font-medium transition-colors ${view === "replenishment" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+            >
+              Reposición
+              {replLoaded && alerts.length > 0 && (
+                <span className={`rounded-full text-xs font-semibold px-1.5 py-0.5 leading-none ${view === "replenishment" ? "bg-white/25 text-white" : "bg-red-100 text-red-600"}`}>
+                  {alerts.length}
+                </span>
+              )}
+            </button>
+          </div>
+          {view === "inventory" && (
+            <Button onClick={() => setCreating(true)} className="gap-2">
+              <PlusIcon className="h-4 w-4" /> Nuevo producto
+            </Button>
+          )}
         </div>
 
-        <Card>
-          {/* Tabs por familia */}
-          <div className="flex border-b border-slate-200 overflow-x-auto">
-            {FAMILY_TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setFamilyTab(tab)}
-                className={`flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  familyTab === tab
-                    ? "border-indigo-500 text-indigo-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                {tab === "ALL" ? "Todos" : METAL_FAMILY_LABELS[tab]}
-                <span className="rounded-full bg-slate-100 text-slate-600 text-xs font-semibold px-1.5 py-0.5 leading-none">
-                  {countForFamily(tab)}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Buscador */}
-          <div className="px-4 py-3 border-b border-slate-100">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar producto…"
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
+        {view === "inventory" ? (
+          <Card>
+            {/* Tabs por familia */}
+            <div className="flex border-b border-slate-200 overflow-x-auto">
+              {FAMILY_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setFamilyTab(tab)}
+                  className={`flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                    familyTab === tab
+                      ? "border-indigo-500 text-indigo-600"
+                      : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {tab === "ALL" ? "Todos" : METAL_FAMILY_LABELS[tab]}
+                  <span className="rounded-full bg-slate-100 text-slate-600 text-xs font-semibold px-1.5 py-0.5 leading-none">
+                    {countForFamily(tab)}
+                  </span>
+                </button>
+              ))}
             </div>
-          </div>
 
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="p-5 space-y-3">
-                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+            {/* Buscador */}
+            <div className="px-4 py-3 border-b border-slate-100">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar producto…"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
               </div>
-            ) : filtered.length === 0 ? (
-              <p className="px-5 py-10 text-sm text-slate-400 text-center">
-                No hay productos {search ? "para esa búsqueda" : "en esta familia"}.
-              </p>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {filtered.map((p) => (
-                  <div
-                    key={p.id}
-                    className={`flex items-center gap-3 px-4 py-3 ${p.active ? "" : "bg-slate-50/70 opacity-70"}`}
-                  >
-                    {/* Foto */}
-                    {p.imageUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => setLightbox({ url: p.imageUrl!, filename: p.name })}
-                        className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
-                        title="Ampliar foto"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
-                      </button>
-                    ) : (
-                      <div className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
-                        <PhotoIcon className="h-5 w-5 text-slate-300" />
+            </div>
+
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="p-5 space-y-3">
+                  {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+                </div>
+              ) : filtered.length === 0 ? (
+                <p className="px-5 py-10 text-sm text-slate-400 text-center">
+                  No hay productos {search ? "para esa búsqueda" : "en esta familia"}.
+                </p>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {filtered.map((p) => (
+                    <div
+                      key={p.id}
+                      className={`flex items-center gap-3 px-4 py-3 ${p.active ? "" : "bg-slate-50/70 opacity-70"}`}
+                    >
+                      {/* Foto */}
+                      {p.imageUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => setLightbox({ url: p.imageUrl!, filename: p.name })}
+                          className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
+                          title="Ampliar foto"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                        </button>
+                      ) : (
+                        <div className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
+                          <PhotoIcon className="h-5 w-5 text-slate-300" />
+                        </div>
+                      )}
+
+                      {/* Nombre + familia */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">
+                          {p.name}
+                          {!p.active && <span className="ml-2 text-xs font-normal text-slate-400">(inactivo)</span>}
+                        </p>
+                        <p className="text-xs text-slate-400">{METAL_FAMILY_LABELS[p.family]}</p>
                       </div>
-                    )}
 
-                    {/* Nombre + familia */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">
-                        {p.name}
-                        {!p.active && <span className="ml-2 text-xs font-normal text-slate-400">(inactivo)</span>}
-                      </p>
-                      <p className="text-xs text-slate-400">{METAL_FAMILY_LABELS[p.family]}</p>
-                    </div>
+                      {/* Stock */}
+                      <div className="shrink-0 text-right w-20">
+                        <span
+                          className={`inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-md text-sm font-semibold ${
+                            p.stock <= 0
+                              ? "bg-red-50 text-red-600"
+                              : p.stock <= 5
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-emerald-50 text-emerald-700"
+                          }`}
+                          title="Stock disponible"
+                        >
+                          {p.stock}
+                        </span>
+                      </div>
 
-                    {/* Stock */}
-                    <div className="shrink-0 text-right w-20">
-                      <span
-                        className={`inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-md text-sm font-semibold ${
-                          p.stock <= 0
-                            ? "bg-red-50 text-red-600"
-                            : p.stock <= 5
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-emerald-50 text-emerald-700"
-                        }`}
-                        title="Stock disponible"
-                      >
-                        {p.stock}
-                      </span>
+                      {/* Acciones */}
+                      <div className="shrink-0 flex items-center gap-1">
+                        <button
+                          onClick={() => setStockFor(p)}
+                          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+                          title="Dar entrada / ajustar stock"
+                        >
+                          <ArrowDownTrayIcon className="h-4 w-4" /> Stock
+                        </button>
+                        <button
+                          onClick={() => setEditing(p)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                          title="Editar"
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => toggleActive(p)}
+                          className="rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                          title={p.active ? "Desactivar" : "Activar"}
+                        >
+                          {p.active ? "Ocultar" : "Mostrar"}
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(p)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                          title="Eliminar"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Acciones */}
-                    <div className="shrink-0 flex items-center gap-1">
-                      <button
-                        onClick={() => setStockFor(p)}
-                        className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
-                        title="Dar entrada / ajustar stock"
-                      >
-                        <ArrowDownTrayIcon className="h-4 w-4" /> Stock
-                      </button>
-                      <button
-                        onClick={() => setEditing(p)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                        title="Editar"
-                      >
-                        <PencilSquareIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => toggleActive(p)}
-                        className="rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                        title={p.active ? "Desactivar" : "Activar"}
-                      >
-                        {p.active ? "Ocultar" : "Mostrar"}
-                      </button>
-                      <button
-                        onClick={() => deleteProduct(p)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                        title="Eliminar"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <ReplenishmentView
+            loading={replLoading || !replLoaded}
+            inCampaign={inCampaign}
+            alerts={alerts}
+            inProgress={inProgress}
+            noHistoryCount={noHistory}
+            onStock={(it) => setStockFor(replItemToProduct(it))}
+            onAdjust={(it) => setEditing(replItemToProduct(it))}
+            onRequested={setRequested}
+            onLightbox={setLightbox}
+          />
+        )}
       </div>
 
       {(creating || editing) && (
         <ProductModal
           product={editing}
           onClose={() => { setCreating(false); setEditing(null); }}
-          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+          onSaved={() => { setCreating(false); setEditing(null); reload(); }}
         />
       )}
 
@@ -275,7 +399,7 @@ export default function AlmacenPage() {
         <StockModal
           product={stockFor}
           onClose={() => setStockFor(null)}
-          onSaved={() => { setStockFor(null); load(); }}
+          onSaved={() => { setStockFor(null); reload(); }}
         />
       )}
 
@@ -283,6 +407,209 @@ export default function AlmacenPage() {
         <ImageLightbox images={[lightbox]} onClose={() => setLightbox(null)} />
       )}
     </AppLayout>
+  );
+}
+
+// ── Vista de Reposición ──────────────────────────────────────────────────────
+
+function ReplenishmentView({
+  loading,
+  inCampaign,
+  alerts,
+  inProgress,
+  noHistoryCount,
+  onStock,
+  onAdjust,
+  onRequested,
+  onLightbox,
+}: {
+  loading: boolean;
+  inCampaign: boolean;
+  alerts: ReplItem[];
+  inProgress: ReplItem[];
+  noHistoryCount: number;
+  onStock: (it: ReplItem) => void;
+  onAdjust: (it: ReplItem) => void;
+  onRequested: (it: ReplItem, value: boolean) => void;
+  onLightbox: (img: { url: string; filename: string }) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {inCampaign && (
+        <div className="flex items-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-700">
+          <SparklesIcon className="h-5 w-5 shrink-0" />
+          <span>Periodo de <strong>campaña</strong> activo: las cantidades sugeridas se han incrementado para cubrir el pico de demanda.</span>
+        </div>
+      )}
+
+      {/* Avisos de reposición */}
+      <Card>
+        <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100">
+          <ExclamationTriangleIcon className={`h-5 w-5 ${alerts.length ? "text-red-500" : "text-emerald-500"}`} />
+          <h2 className="text-sm font-semibold text-slate-800">
+            {alerts.length ? `${alerts.length} producto${alerts.length !== 1 ? "s" : ""} por reponer` : "Sin avisos de reposición"}
+          </h2>
+        </div>
+        <CardContent className="p-0">
+          {alerts.length === 0 ? (
+            <div className="px-5 py-10 text-center text-sm text-slate-400">
+              <CheckCircleIcon className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
+              Todo el stock está por encima de su punto de pedido.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {alerts.map((it) => (
+                <ReplRow key={it.id} it={it} onStock={onStock} onAdjust={onAdjust} onRequested={onRequested} onLightbox={onLightbox} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* En curso (ya pedido al proveedor) */}
+      {inProgress.length > 0 && (
+        <Card>
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100">
+            <TruckIcon className="h-5 w-5 text-blue-500" />
+            <h2 className="text-sm font-semibold text-slate-800">
+              {inProgress.length} pedido{inProgress.length !== 1 ? "s" : ""} al proveedor en curso
+            </h2>
+          </div>
+          <CardContent className="p-0">
+            <div className="divide-y divide-slate-100">
+              {inProgress.map((it) => (
+                <div key={it.id} className="flex items-center gap-3 px-4 py-3">
+                  <Thumb it={it} onLightbox={onLightbox} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-800 truncate">{it.name}</p>
+                    <p className="text-xs text-slate-400">
+                      {METAL_FAMILY_LABELS[it.family]} · stock {it.stock}
+                      {it.supplier ? ` · ${it.supplier}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onStock(it)}
+                    className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4" /> Recibir
+                  </button>
+                  <button
+                    onClick={() => onRequested(it, false)}
+                    className="rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                    title="Reactivar el aviso de reposición"
+                  >
+                    Reactivar aviso
+                  </button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {noHistoryCount > 0 && (
+        <p className="text-xs text-slate-400 px-1">
+          {noHistoryCount} producto{noHistoryCount !== 1 ? "s" : ""} aún sin histórico suficiente para calcular el punto de pedido.
+          Puedes fijarles un punto de pedido manual desde «Editar» en el inventario.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Thumb({ it, onLightbox }: { it: ReplItem; onLightbox: (img: { url: string; filename: string }) => void }) {
+  if (!it.imageUrl) {
+    return (
+      <div className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
+        <PhotoIcon className="h-5 w-5 text-slate-300" />
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => onLightbox({ url: it.imageUrl!, filename: it.name })}
+      className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
+      title="Ampliar foto"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={it.imageUrl} alt={it.name} className="h-full w-full object-cover" />
+    </button>
+  );
+}
+
+function ReplRow({
+  it, onStock, onAdjust, onRequested, onLightbox,
+}: {
+  it: ReplItem;
+  onStock: (it: ReplItem) => void;
+  onAdjust: (it: ReplItem) => void;
+  onRequested: (it: ReplItem, value: boolean) => void;
+  onLightbox: (img: { url: string; filename: string }) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 flex-wrap sm:flex-nowrap">
+      <Thumb it={it} onLightbox={onLightbox} />
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-slate-800 truncate">{it.name}</p>
+        <p className="text-xs text-slate-400">
+          {METAL_FAMILY_LABELS[it.family]}
+          {it.supplier ? ` · ${it.supplier}` : ""}
+          {` · entrega ${it.leadDays}d`}
+          {it.usingOverride && " · punto manual"}
+        </p>
+      </div>
+
+      {/* Métricas */}
+      <div className="flex items-center gap-4 text-center shrink-0">
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-slate-400">Stock</p>
+          <p className="text-sm font-semibold text-red-600">{it.stock}</p>
+        </div>
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-slate-400">Punto</p>
+          <p className="text-sm font-medium text-slate-600">{it.reorderPoint}</p>
+        </div>
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-slate-400">Pedir</p>
+          <p className="text-base font-bold text-indigo-700">{it.suggestedQty}</p>
+        </div>
+      </div>
+
+      {/* Acciones */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={() => onStock(it)}
+          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+          title="Dar entrada de stock"
+        >
+          <ArrowDownTrayIcon className="h-4 w-4" /> Recibir
+        </button>
+        <button
+          onClick={() => onRequested(it, true)}
+          className="rounded-md px-2 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+          title="Marcar como pedido al proveedor (silencia el aviso)"
+        >
+          Ya pedido
+        </button>
+        <button
+          onClick={() => onAdjust(it)}
+          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          title="Ajustar punto de pedido / datos"
+        >
+          <PencilSquareIcon className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -302,6 +629,9 @@ function ProductModal({
   const [family, setFamily]   = useState<MetalFamily>(product?.family ?? METAL_FAMILY_OPTIONS[0].value);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
   const [stock, setStock]     = useState<string>(product ? String(product.stock) : "0");
+  const [supplier, setSupplier] = useState(product?.supplier ?? "");
+  const [leadTime, setLeadTime] = useState(product?.leadTimeDays != null ? String(product.leadTimeDays) : "");
+  const [reorder, setReorder]   = useState(product?.reorderPointOverride != null ? String(product.reorderPointOverride) : "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState("");
@@ -323,9 +653,13 @@ function ProductModal({
     setError("");
     if (!name.trim()) { setError("El nombre es obligatorio"); return; }
     setSaving(true);
-    const payload = isEdit
-      ? { name, family, imageUrl }
-      : { name, family, imageUrl, stock: Math.max(0, Math.floor(Number(stock) || 0)) };
+    const common = {
+      name, family, imageUrl,
+      supplier: supplier.trim() || null,
+      leadTimeDays: leadTime === "" ? null : Math.max(0, Math.floor(Number(leadTime) || 0)),
+      reorderPointOverride: reorder === "" ? null : Math.max(0, Math.floor(Number(reorder) || 0)),
+    };
+    const payload = isEdit ? common : { ...common, stock: Math.max(0, Math.floor(Number(stock) || 0)) };
     const res = await fetch(isEdit ? `/api/products/${product!.id}` : "/api/products", {
       method: isEdit ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -405,6 +739,21 @@ function ProductModal({
             onChange={(e) => setStock(e.target.value)}
           />
         )}
+
+        {/* Reposición */}
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Proveedor" value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Opcional" />
+          <Input label="Plazo entrega (días)" type="number" min={0} value={leadTime} onChange={(e) => setLeadTime(e.target.value)} placeholder="p. ej. 7" />
+        </div>
+        <Input
+          label="Punto de pedido manual (opcional)"
+          type="number"
+          min={0}
+          value={reorder}
+          onChange={(e) => setReorder(e.target.value)}
+          placeholder="Déjalo vacío para cálculo automático"
+        />
+
         {isEdit && (
           <p className="text-xs text-slate-400">
             Para modificar el stock usa la acción «Stock» de la lista.

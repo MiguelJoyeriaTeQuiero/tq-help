@@ -47,11 +47,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, family, imageUrl, stock } = body as {
+  const { name, family, imageUrl, stock, supplier, leadTimeDays, reorderPointOverride } = body as {
     name?: string;
     family?: MetalFamily;
     imageUrl?: string | null;
     stock?: number;
+    supplier?: string | null;
+    leadTimeDays?: number | null;
+    reorderPointOverride?: number | null;
   };
 
   if (!name?.trim()) return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
@@ -71,6 +74,9 @@ export async function POST(req: NextRequest) {
       family,
       imageUrl: imageUrl ?? null,
       stock: initialStock,
+      supplier: supplier?.trim() || null,
+      leadTimeDays: leadTimeDays == null ? null : Math.max(0, Math.floor(leadTimeDays)),
+      reorderPointOverride: reorderPointOverride == null ? null : Math.max(0, Math.floor(reorderPointOverride)),
     },
   });
 

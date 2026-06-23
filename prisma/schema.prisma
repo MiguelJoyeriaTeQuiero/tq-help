@@ -641,6 +641,13 @@ model Product {
   imageUrl    String?
   stock       Int              @default(0)
   active      Boolean          @default(true)
+
+  // Reposición
+  supplier               String?  // proveedor
+  leadTimeDays           Int?     // plazo de entrega del proveedor en días
+  reorderPointOverride   Int?     // punto de pedido manual; si se fija, sustituye al cálculo automático
+  replenishmentRequested Boolean  @default(false) // "ya pedido al proveedor" → silencia el aviso hasta recibir stock
+
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -648,6 +655,21 @@ model Product {
 
   @@unique([family, name])
   @@map("products")
+}
+
+// Configuración global del motor de reposición (fila única, id = "singleton")
+model ReplenishmentConfig {
+  id                 String   @id @default("singleton")
+  safetyFactor       Float    @default(0.25) // colchón de seguridad como fracción del consumo por ciclo
+  cycleDays          Int      @default(60)   // duración del ciclo de pedido (≈2 meses)
+  windowMonths       Int      @default(12)   // ventana de histórico para el consumo medio
+  minCycles          Int      @default(2)    // ciclos mínimos con histórico para fiarse del cálculo
+  defaultLeadDays    Int      @default(7)    // plazo de entrega por defecto si el producto no lo tiene
+  campaignMultiplier Float    @default(1.5)  // multiplicador aplicado durante los meses de campaña
+  campaignMonths     Int[]    @default([11, 12]) // meses (1-12) considerados campaña
+  updatedAt          DateTime @updatedAt
+
+  @@map("replenishment_config")
 }
 
 model MetalOrder {

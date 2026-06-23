@@ -22,11 +22,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!product) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
 
   const body = await req.json();
-  const { name, family, imageUrl, active } = body as {
+  const { name, family, imageUrl, active, supplier, leadTimeDays, reorderPointOverride, replenishmentRequested } = body as {
     name?: string;
     family?: MetalFamily;
     imageUrl?: string | null;
     active?: boolean;
+    supplier?: string | null;
+    leadTimeDays?: number | null;
+    reorderPointOverride?: number | null;
+    replenishmentRequested?: boolean;
   };
 
   if (name !== undefined && !name.trim()) {
@@ -34,6 +38,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   if (family !== undefined && !FAMILIES.includes(family as never)) {
     return NextResponse.json({ error: "Familia no válida" }, { status: 400 });
+  }
+  if (leadTimeDays != null && (!Number.isFinite(leadTimeDays) || leadTimeDays < 0)) {
+    return NextResponse.json({ error: "El plazo de entrega debe ser un número de días ≥ 0" }, { status: 400 });
+  }
+  if (reorderPointOverride != null && (!Number.isFinite(reorderPointOverride) || reorderPointOverride < 0)) {
+    return NextResponse.json({ error: "El punto de pedido debe ser un número ≥ 0" }, { status: 400 });
   }
 
   const nextName = name !== undefined ? name.trim() : product.name;
@@ -56,6 +66,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(family !== undefined ? { family } : {}),
       ...(imageUrl !== undefined ? { imageUrl } : {}),
       ...(active !== undefined ? { active } : {}),
+      ...(supplier !== undefined ? { supplier: supplier?.trim() || null } : {}),
+      ...(leadTimeDays !== undefined ? { leadTimeDays: leadTimeDays == null ? null : Math.floor(leadTimeDays) } : {}),
+      ...(reorderPointOverride !== undefined ? { reorderPointOverride: reorderPointOverride == null ? null : Math.floor(reorderPointOverride) } : {}),
+      ...(replenishmentRequested !== undefined ? { replenishmentRequested } : {}),
     },
   });
 
