@@ -31,3 +31,8 @@ export function isAdmin(user: SessionUser): boolean {
 export function isSuperAdmin(user: SessionUser): boolean {
   return user.role === "SUPERADMIN";
 }
+
+// Gestión de almacén: superadmins y cualquier usuario del departamento de logística
+export function canManageWarehouse(user: SessionUser): boolean {
+  return user.role === "SUPERADMIN" || user.department === "LOGISTICA";
+}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/permissions";
+import { applyOrderStock, restoreOrderStock } from "@/lib/metal-stock";
 import { MetalOrderStatus } from "@prisma/client";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
-  const order = await prisma.metalOrder.findUnique({ where: { id } });
+  const order = await prisma.metalOrder.findUnique({ where: { id }, include: { items: true } });
   if (!order) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const body = await req.json();
@@ -49,16 +50,35 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  const updated = await prisma.metalOrder.update({
-    where: { id },
-    data: {
-      ...(status ? { status } : {}),
-      ...(notes !== undefined ? { notes } : {}),
-    },
-    include: {
-      createdBy: { select: { id: true, name: true, department: true } },
-      items: { orderBy: { family: "asc" } },
-    },
+  // Ajuste de stock según el cambio de estado:
+  //  - al salir de BORRADOR (envío/confirmación) se descuenta stock una sola vez
+  //  - al cancelar un pedido cuyo stock ya se descontó, se devuelve
+  let nextStockApplied = order.stockApplied;
+  if (status && status !== order.status) {
+    if (status === "CANCELADO") {
+      if (order.stockApplied) nextStockApplied = false;
+    } else if (status !== "BORRADOR" && !order.stockApplied) {
+      nextStockApplied = true;
+    }
+  }
+
+  const updated = await prisma.$transaction(async (tx) => {
+    if (nextStockApplied !== order.stockApplied) {
+      if (nextStockApplied) await applyOrderStock(tx, order.items);
+      else await restoreOrderStock(tx, order.items);
+    }
+    return tx.metalOrder.update({
+      where: { id },
+      data: {
+        ...(status ? { status } : {}),
+        ...(notes !== undefined ? { notes } : {}),
+        stockApplied: nextStockApplied,
+      },
+      include: {
+        createdBy: { select: { id: true, name: true, department: true } },
+        items: { orderBy: { family: "asc" } },
+      },
+    });
   });
 
   return NextResponse.json(updated);
@@ -69,7 +89,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
-  const order = await prisma.metalOrder.findUnique({ where: { id } });
+  const order = await prisma.metalOrder.findUnique({ where: { id }, include: { items: true } });
   if (!order) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const admin = isAdmin(session.user);
@@ -81,6 +101,10 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Solo se pueden eliminar borradores" }, { status: 400 });
   }
 
-  await prisma.metalOrder.delete({ where: { id } });
+  await prisma.$transaction(async (tx) => {
+    // Si el stock se había descontado, lo devolvemos antes de borrar el pedido.
+    if (order.stockApplied) await restoreOrderStock(tx, order.items);
+    await tx.metalOrder.delete({ where: { id } });
+  });
   return NextResponse.json({ ok: true });
 }

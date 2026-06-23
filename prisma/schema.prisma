@@ -634,16 +634,33 @@ model FaqItem {
 // MÓDULO 7 — PEDIDOS DE MATERIAL (METAL)
 // ─────────────────────────────────────────
 
-model MetalOrder {
+model Product {
   id          String           @id @default(cuid())
-  status      MetalOrderStatus @default(BORRADOR)
-  notes       String?
-  createdById String
-  createdBy   User             @relation("MetalOrderCreator", fields: [createdById], references: [id])
-  department  String
-  items       MetalOrderItem[]
+  name        String
+  family      MetalFamily
+  imageUrl    String?
+  stock       Int              @default(0)
+  active      Boolean          @default(true)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+
+  orderItems  MetalOrderItem[]
+
+  @@unique([family, name])
+  @@map("products")
+}
+
+model MetalOrder {
+  id           String           @id @default(cuid())
+  status       MetalOrderStatus @default(BORRADOR)
+  notes        String?
+  createdById  String
+  createdBy    User             @relation("MetalOrderCreator", fields: [createdById], references: [id])
+  department   String
+  items        MetalOrderItem[]
+  stockApplied Boolean          @default(false) // true cuando ya se ha descontado el stock de este pedido
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@map("metal_orders")
 }
@@ -652,8 +669,10 @@ model MetalOrderItem {
   id               String      @id @default(cuid())
   orderId          String
   order            MetalOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String?
+  product          Product?    @relation(fields: [productId], references: [id])
   family           MetalFamily
-  description      String?
+  description      String?     // snapshot del nombre del producto en el momento del pedido
   quantity         Int         @default(1)
   originalQuantity Int?        // Se rellena la primera vez que un admin modifica la cantidad
 

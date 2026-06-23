@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/permissions";
+import { applyOrderStock } from "@/lib/metal-stock";
 import { MetalFamily } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { notes, items, send } = body as {
     notes?: string;
-    items: { family: MetalFamily; description?: string; quantity: number }[];
+    items: { family: MetalFamily; productId?: string; description?: string; quantity: number }[];
     send?: boolean; // true = enviar directamente, false = guardar borrador
   };
 
@@ -48,21 +49,29 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const order = await prisma.metalOrder.create({
-    data: {
-      notes,
-      status: send ? "ENVIADO" : "BORRADOR",
-      createdById: session.user.id,
-      department: session.user.department,
-      items: {
-        create: items.map((i) => ({
-          family: i.family,
-          description: i.description ?? null,
-          quantity: i.quantity,
-        })),
+  // Si el pedido se envía directamente, descontamos stock en la misma transacción.
+  const order = await prisma.$transaction(async (tx) => {
+    const created = await tx.metalOrder.create({
+      data: {
+        notes,
+        status: send ? "ENVIADO" : "BORRADOR",
+        stockApplied: !!send,
+        createdById: session.user.id,
+        department: session.user.department,
+        items: {
+          create: items.map((i) => ({
+            family: i.family,
+            productId: i.productId ?? null,
+            description: i.description ?? null,
+            quantity: i.quantity,
+          })),
+        },
       },
-    },
-    include: { items: true },
+      include: { items: true },
+    });
+
+    if (send) await applyOrderStock(tx, created.items);
+    return created;
   });
 
   return NextResponse.json(order, { status: 201 });

@@ -23,17 +23,28 @@ import {
   QuestionMarkCircleIcon,
   CursorArrowRaysIcon,
   CubeIcon,
+  BuildingStorefrontIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
 } from "@heroicons/react/24/outline";
 
-const navItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof TicketIcon;
+  roles: string[];
+  exact?: boolean;
+  departments?: string[];
+};
+
+const navItems: NavItem[] = [
   { href: "/tickets",              label: "Incidencias",        icon: TicketIcon,             roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
   { href: "/peticiones",           label: "Peticiones",         icon: LightBulbIcon,           roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
   { href: "/roadmap",              label: "Roadmap",            icon: MapIcon,                 roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
   { href: "/activos",              label: "Activos (ITAM)",     icon: ComputerDesktopIcon,     roles: ["SUPERADMIN", "DEPT_ADMIN"] },
   { href: "/faq",                  label: "FAQ",                icon: QuestionMarkCircleIcon,  roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE", "VIEWER"] },
   { href: "/pedidos-metal",        label: "Pedidos material",   icon: CubeIcon,                roles: ["SUPERADMIN", "DEPT_ADMIN", "EMPLOYEE"] },
+  { href: "/almacen",              label: "Almacén",            icon: BuildingStorefrontIcon,  roles: ["SUPERADMIN"], departments: ["LOGISTICA"] },
   { href: "/admin",                label: "Panel admin",        icon: ChartBarIcon,            roles: ["SUPERADMIN", "DEPT_ADMIN", "VIEWER"], exact: true },
   { href: "/admin/usuarios",       label: "Usuarios",           icon: UsersIcon,               roles: ["SUPERADMIN"] },
   { href: "/admin/plantillas",     label: "Plantillas",         icon: DocumentDuplicateIcon,   roles: ["SUPERADMIN", "DEPT_ADMIN"] },
@@ -55,8 +66,14 @@ export function Sidebar({ onClose, collapsed = false, onToggleCollapse }: Sideba
   const pathname = usePathname();
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const dept = session?.user?.department;
 
-  const visible = navItems.filter((item) => !role || item.roles.includes(role));
+  const visible = navItems.filter(
+    (item) =>
+      !role ||
+      item.roles.includes(role) ||
+      (!!dept && (item.departments?.includes(dept) ?? false))
+  );
 
   return (
     <Tooltip.Provider delayDuration={150} skipDelayDuration={100}>

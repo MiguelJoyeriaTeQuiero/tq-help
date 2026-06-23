@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { put } from "@vercel/blob";
+import { captureError } from "@/lib/observability";
 
 const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
 const ALLOWED_TYPES = [
@@ -12,6 +13,13 @@ const ALLOWED_TYPES = [
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json(
+      { error: "El almacenamiento de archivos no está configurado (falta BLOB_READ_WRITE_TOKEN)" },
+      { status: 503 },
+    );
+  }
 
   const formData = await req.formData();
   const file = formData.get("file") as File;
@@ -25,13 +33,18 @@ export async function POST(req: NextRequest) {
   const ext = file.name.split(".").pop();
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const blob = await put(filename, file, { access: "public" });
-
-  return NextResponse.json({
-    url: blob.url,
-    storageKey: blob.url,
-    filename: file.name,
-    mimeType: file.type,
-    size: file.size,
-  });
+  try {
+    const blob = await put(filename, file, { access: "public" });
+    return NextResponse.json({
+      url: blob.url,
+      storageKey: blob.url,
+      filename: file.name,
+      mimeType: file.type,
+      size: file.size,
+    });
+  } catch (err) {
+    await captureError(err, { scope: "POST /api/upload" });
+    const message = err instanceof Error ? err.message : "Error al subir el archivo";
+    return NextResponse.json({ error: `No se pudo subir el archivo: ${message}` }, { status: 502 });
+  }
 }

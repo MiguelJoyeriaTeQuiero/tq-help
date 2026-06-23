@@ -59,6 +59,18 @@ export async function PATCH(
         ? current.originalQuantity   // ya fue modificado antes — conservar el original histórico
         : current.quantity;          // primera modificación — guardar el valor original del pedido
 
+      // Si el stock ya se descontó para este pedido, reconciliamos por la diferencia:
+      // bajar la cantidad devuelve unidades al stock; subirla descuenta más.
+      if (order.stockApplied && current.productId) {
+        const diff = current.quantity - patch.quantity; // >0 → devolver stock; <0 → descontar más
+        if (diff !== 0) {
+          await tx.product.update({
+            where: { id: current.productId },
+            data: { stock: { increment: diff } },
+          });
+        }
+      }
+
       await tx.metalOrderItem.update({
         where: { id: patch.id },
         data: {
