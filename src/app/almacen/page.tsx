@@ -218,13 +218,13 @@ export default function AlmacenPage() {
           <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-sm">
             <button
               onClick={() => setView("inventory")}
-              className={`rounded-md px-4 py-1.5 font-medium transition-colors ${view === "inventory" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`rounded-md px-3 py-1.5 sm:px-4 font-medium transition-colors ${view === "inventory" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
               Inventario
             </button>
             <button
               onClick={() => setView("replenishment")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 font-medium transition-colors ${view === "replenishment" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 sm:px-4 font-medium transition-colors ${view === "replenishment" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
               Reposición
               {replLoaded && alerts.length > 0 && (
@@ -235,7 +235,7 @@ export default function AlmacenPage() {
             </button>
             <button
               onClick={() => setView("count")}
-              className={`rounded-md px-4 py-1.5 font-medium transition-colors ${view === "count" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`rounded-md px-3 py-1.5 sm:px-4 font-medium transition-colors ${view === "count" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
               Recuento
             </button>
@@ -297,7 +297,7 @@ export default function AlmacenPage() {
                   {filtered.map((p) => (
                     <div
                       key={p.id}
-                      className={`flex items-center gap-3 px-4 py-3 ${p.active ? "" : "bg-slate-50/70 opacity-70"}`}
+                      className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 ${p.active ? "" : "bg-slate-50/70 opacity-70"}`}
                     >
                       {/* Foto */}
                       {p.imageUrl ? (
@@ -342,7 +342,7 @@ export default function AlmacenPage() {
                       </div>
 
                       {/* Acciones */}
-                      <div className="shrink-0 flex items-center gap-1">
+                      <div className="flex items-center gap-1 w-full justify-end sm:w-auto sm:shrink-0">
                         <button
                           onClick={() => setStockFor(p)}
                           className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
@@ -499,7 +499,7 @@ function ReplenishmentView({
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100">
               {inProgress.map((it) => (
-                <div key={it.id} className="flex items-center gap-3 px-4 py-3">
+                <div key={it.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
                   <Thumb it={it} onLightbox={onLightbox} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-800 truncate">{it.name}</p>
@@ -508,19 +508,21 @@ function ReplenishmentView({
                       {it.supplier ? ` · ${it.supplier}` : ""}
                     </p>
                   </div>
-                  <button
-                    onClick={() => onStock(it)}
-                    className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
-                  >
-                    <ArrowDownTrayIcon className="h-4 w-4" /> Recibir
-                  </button>
-                  <button
-                    onClick={() => onRequested(it, false)}
-                    className="rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                    title="Reactivar el aviso de reposición"
-                  >
-                    Reactivar aviso
-                  </button>
+                  <div className="flex items-center gap-1 w-full justify-end sm:w-auto">
+                    <button
+                      onClick={() => onStock(it)}
+                      className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+                    >
+                      <ArrowDownTrayIcon className="h-4 w-4" /> Recibir
+                    </button>
+                    <button
+                      onClick={() => onRequested(it, false)}
+                      className="rounded-md px-2 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                      title="Reactivar el aviso de reposición"
+                    >
+                      Reactivar aviso
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -984,7 +986,7 @@ function CountView({
 
       {/* Buscador + acciones */}
       <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[180px]">
+        <div className="relative w-full sm:flex-1 sm:w-auto sm:min-w-[180px]">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
@@ -994,11 +996,11 @@ function CountView({
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
         </div>
-        <Button variant="outline" onClick={exportCsv} className="gap-1.5">
-          <ArrowDownTrayIcon className="h-4 w-4" /> Exportar a Excel
+        <Button variant="outline" onClick={exportCsv} className="gap-1.5 flex-1 sm:flex-none justify-center">
+          <ArrowDownTrayIcon className="h-4 w-4" /> <span className="hidden sm:inline">Exportar a </span>Excel
         </Button>
-        <Button onClick={applyAdjustments} loading={applying} disabled={countedEntries.length === 0} className="gap-1.5">
-          <CheckCircleIcon className="h-4 w-4" /> Aplicar ajustes
+        <Button onClick={applyAdjustments} loading={applying} disabled={countedEntries.length === 0} className="gap-1.5 flex-1 sm:flex-none justify-center">
+          <CheckCircleIcon className="h-4 w-4" /> Aplicar
         </Button>
       </div>
 
@@ -1023,21 +1025,22 @@ function CountView({
                 const raw = counts[p.id];
                 const hasCount = raw !== undefined && raw !== "";
                 const diff = hasCount ? Number(raw) - p.stock : null;
+                const diffClass = diff === null ? "text-slate-300" : diff === 0 ? "text-slate-400" : diff > 0 ? "text-emerald-600" : "text-red-600";
                 return (
-                  <div key={p.id} className="grid grid-cols-[1fr_90px_110px_90px] gap-3 px-5 py-2.5 items-center">
+                  <div key={p.id} className="flex flex-col gap-2 px-4 py-3 sm:grid sm:grid-cols-[1fr_90px_110px_90px] sm:gap-3 sm:items-center sm:px-5 sm:py-2.5">
                     <div className="flex items-center gap-3 min-w-0">
                       {p.imageUrl ? (
                         <button
                           type="button"
                           onClick={() => onLightbox({ url: p.imageUrl!, filename: p.name })}
-                          className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
+                          className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
                           title="Ampliar foto"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
                         </button>
                       ) : (
-                        <div className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
+                        <div className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
                           <PhotoIcon className="h-4 w-4 text-slate-300" />
                         </div>
                       )}
@@ -1047,24 +1050,30 @@ function CountView({
                       </div>
                     </div>
 
-                    <span className="text-sm text-center text-slate-600 font-medium">{p.stock}</span>
+                    {/* Métricas: en móvil fila con etiquetas; en escritorio celdas del grid */}
+                    <div className="flex items-center justify-between gap-3 sm:contents">
+                      <span className="text-sm text-slate-600 sm:text-center sm:font-medium">
+                        <span className="text-xs text-slate-400 sm:hidden">Sistema </span>
+                        <span className="font-semibold sm:font-medium">{p.stock}</span>
+                      </span>
 
-                    <input
-                      type="number"
-                      min={0}
-                      value={raw ?? ""}
-                      onChange={(e) => setCount(p.id, e.target.value)}
-                      placeholder="—"
-                      className={`w-full rounded-md border text-center text-sm py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-                        hasCount ? "border-indigo-300 bg-white text-indigo-700 font-semibold" : "border-slate-200 bg-white text-slate-500"
-                      }`}
-                    />
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        value={raw ?? ""}
+                        onChange={(e) => setCount(p.id, e.target.value)}
+                        placeholder="Contado"
+                        className={`w-28 sm:w-full rounded-md border text-center text-base sm:text-sm py-2 sm:py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                          hasCount ? "border-indigo-300 bg-white text-indigo-700 font-semibold" : "border-slate-200 bg-white text-slate-500"
+                        }`}
+                      />
 
-                    <span className={`text-sm text-center font-semibold ${
-                      diff === null ? "text-slate-300" : diff === 0 ? "text-slate-400" : diff > 0 ? "text-emerald-600" : "text-red-600"
-                    }`}>
-                      {diff === null ? "—" : diff > 0 ? `+${diff}` : diff}
-                    </span>
+                      <span className={`text-sm font-semibold sm:text-center ${diffClass}`}>
+                        <span className="text-xs text-slate-400 font-normal sm:hidden">Dif </span>
+                        {diff === null ? "—" : diff > 0 ? `+${diff}` : diff}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
