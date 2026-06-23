@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { METAL_FAMILY_LABELS } from "@/lib/metal-families";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import type { MetalFamily } from "@prisma/client";
 
 const TABS = Object.keys(METAL_FAMILY_LABELS) as MetalFamily[];
@@ -19,6 +20,7 @@ interface Product {
   name: string;
   family: MetalFamily;
   stock: number;
+  imageUrl: string | null;
 }
 
 type Quantities = Record<string, number>; // keyed by product id
@@ -36,6 +38,7 @@ export default function NuevoPedidoMetalPage() {
 
   const [products, setProducts]   = useState<Product[]>([]);
   const [loading, setLoading]     = useState(true);
+  const [lightbox, setLightbox]   = useState<{ url: string; filename: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/products")
@@ -219,6 +222,23 @@ export default function NuevoPedidoMetalPage() {
                           qty > 0 ? "bg-indigo-50/60" : "hover:bg-slate-50"
                         }`}
                       >
+                        {/* Foto */}
+                        {product.imageUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => setLightbox({ url: product.imageUrl!, filename: product.name })}
+                            className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
+                            title="Ampliar foto"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                          </button>
+                        ) : (
+                          <div className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
+                            <PhotoIcon className="h-4 w-4 text-slate-300" />
+                          </div>
+                        )}
+
                         <div className="flex-1 min-w-0">
                           <span className={`text-sm ${qty > 0 ? "text-indigo-900 font-medium" : "text-slate-700"}`}>
                             {product.name}
@@ -311,6 +331,10 @@ export default function NuevoPedidoMetalPage() {
         </div>
 
       </div>
+
+      {lightbox && (
+        <ImageLightbox images={[lightbox]} onClose={() => setLightbox(null)} />
+      )}
     </AppLayout>
   );
 }

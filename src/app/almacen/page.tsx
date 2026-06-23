@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { canManageWarehouse } from "@/lib/permissions";
 import { METAL_FAMILY_LABELS, METAL_FAMILY_OPTIONS } from "@/lib/metal-families";
 import {
@@ -47,6 +48,7 @@ export default function AlmacenPage() {
   const [editing, setEditing]   = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [stockFor, setStockFor] = useState<Product | null>(null);
+  const [lightbox, setLightbox] = useState<{ url: string; filename: string } | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -181,14 +183,21 @@ export default function AlmacenPage() {
                     className={`flex items-center gap-3 px-4 py-3 ${p.active ? "" : "bg-slate-50/70 opacity-70"}`}
                   >
                     {/* Foto */}
-                    <div className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
-                      {p.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
+                    {p.imageUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setLightbox({ url: p.imageUrl!, filename: p.name })}
+                        className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden cursor-zoom-in focus-ring"
+                        title="Ampliar foto"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
-                      ) : (
+                      </button>
+                    ) : (
+                      <div className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center">
                         <PhotoIcon className="h-5 w-5 text-slate-300" />
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Nombre + familia */}
                     <div className="flex-1 min-w-0">
@@ -268,6 +277,10 @@ export default function AlmacenPage() {
           onClose={() => setStockFor(null)}
           onSaved={() => { setStockFor(null); load(); }}
         />
+      )}
+
+      {lightbox && (
+        <ImageLightbox images={[lightbox]} onClose={() => setLightbox(null)} />
       )}
     </AppLayout>
   );
